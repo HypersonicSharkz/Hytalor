@@ -9,7 +9,6 @@ Instead of overwriting entire JSON files, Hytalor allows smaller patches which a
 Hytalor is still under development, and doesn't support Build type assets yet (These mainly being NPC roles)
 
 Road Map:
-- Builder Support (NPC Roles)
 - Automatically detect differences of entire Asset overrides and dynamically create patches instead.
 
 ## ✨ Key Features
