@@ -1,0 +1,42 @@
+plugins {
+    id("java")
+    id("app.ultradev.hytalegradle") version "1.6.8"
+}
+
+group = "com.hypersonicsharkz"
+version = "1.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.1")
+
+    testImplementation(files("D:\\Hytalor\\build\\hytale\\HytaleServer.jar"))
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+hytale {
+    // Add `--allow-op` to server args (allows you to run `/op self` in-game)
+    allowOp.set(true)
+
+    // Set the patchline to use, currently there are "release" and "pre-release"
+    patchline.set("pre-release")
+
+    // Load mods from the local Hytale installation
+    includeLocalMods.set(false)
+
+    serverJar.set(file("D:\\hytale-downloader\\2026.01.13-50e69c385\\Server\\HytaleServer.jar"))
+    assetsZip.set(file("D:\\hytale-downloader\\2026.01.13-50e69c385\\Server\\Assets.zip"))
+
+    // Replace the version in the manifest with the project version
+    manifest {
+        version.set(project.version.toString())
+    }
+}

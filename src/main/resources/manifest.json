@@ -1,0 +1,25 @@
+{
+    "Group": "com.hypersonicsharkz",
+    "Name": "Hytalor",
+    "Version": "1.0-SNAPSHOT",
+    "Description": "Modify assets without conflicting with other mods.",
+    "Authors": [
+        
+    ],
+    "Website": "",
+    "Main": "com.hypersonicsharkz.HytalorPlugin",
+    "Dependencies": {
+        
+    },
+    "OptionalDependencies": {
+        
+    },
+    "LoadBefore": {
+        
+    },
+    "DisabledByDefault": false,
+    "IncludesAssetPack": false,
+    "SubPlugins": [
+        
+    ]
+}

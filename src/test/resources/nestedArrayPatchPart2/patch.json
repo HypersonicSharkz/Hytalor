@@ -1,0 +1,28 @@
+{
+  "ObjectArray": [
+    {
+      "_index": 0,
+      "NestedArray": [
+        {
+          "_index": 2,
+          "SubProperty6": "NewSubValue6"
+        },
+        {
+          "_index": 1,
+          "_op": "add",
+          "SubProperty8": "SubValue8"
+        },
+        {
+          "_index": 1,
+          "_op": "remove",
+          "ShouldBeIgnored": "Value"
+        },
+        {
+          "_index": 1,
+          "_op": "replace",
+          "ShouldBeIgnored": "Value"
+        }
+      ]
+    }
+  ]
+}

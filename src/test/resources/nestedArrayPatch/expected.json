@@ -1,0 +1,31 @@
+{
+  "ObjectArray": [
+    {
+      "Property1": "Value1",
+      "NestedArray": [
+        {
+          "SubProperty1": "NewSubValue1",
+          "RetainProperty": "RetainValue"
+        },
+        {
+          "SubProperty5": "SubValue5"
+        },
+        {
+          "SubProperty7": "SubValue7"
+        },
+        {
+          "SubProperty6": "SubValue6",
+          "ReplacedProperty": "ReplacedValue"
+        }
+      ]
+    },
+    {
+      "Property2": "Value2",
+      "NestedArray": [
+        {
+          "SubProperty4": "SubValue4"
+        }
+      ]
+    }
+  ]
+}

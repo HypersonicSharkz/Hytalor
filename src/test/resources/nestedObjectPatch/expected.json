@@ -1,0 +1,17 @@
+{
+  "ObjectA": {
+    "ObjectB": {
+      "Property1": "NewValue1",
+      "ObjectC": {
+        "Property2": "Value2",
+        "Property4": "InsertedValue4"
+      }
+    },
+    "ObjectC": {
+      "Property3": "Value3"
+    },
+    "ObjectD": {
+      "Property5": "InsertedValue5"
+    }
+  }
+}

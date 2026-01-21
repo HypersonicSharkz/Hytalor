@@ -1,0 +1,22 @@
+{
+  "SimpleArray": [
+    {
+      "_op": "add",
+      "_value": "Value3"
+    },
+    "Value4"
+  ],
+  "ObjectArray": [
+    {
+      "_op": "add",
+      "Property3": "Value3"
+    }
+  ],
+  "NumberArray": [
+    {
+      "_op": "add",
+      "_value": 4
+    },
+    5
+  ]
+}
