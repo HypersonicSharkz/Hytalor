@@ -9,7 +9,8 @@ Instead of overwriting entire JSON files, Hytalor allows smaller patches which a
 Hytalor is still under development, and doesn't support Build type assets yet (These mainly being NPC roles)
 
 Road Map:
-- Automatically detect differences of entire Asset overrides and dynamically create patches instead.
+- More list searching methods, such as Regex or Key-Value checks
+- Automatically detect differences of entire Asset overrides and dynamically create patches instead. (Might be impossible)
 
 ## ✨ Key Features
 * **Conflict-Mitigation**\
