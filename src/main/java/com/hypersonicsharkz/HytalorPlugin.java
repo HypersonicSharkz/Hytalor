@@ -47,8 +47,6 @@ public class HytalorPlugin extends JavaPlugin {
 
         super.setup();
 
-        this.initializeOverrideDirectory();
-
         this.getEventRegistry().register((short)128, LoadAssetEvent.class, (event) -> {
             this.getLogger().at(Level.INFO).log("Loading Hytalor Patch assets phase...");
             long start = System.nanoTime();
@@ -57,6 +55,8 @@ public class HytalorPlugin extends JavaPlugin {
             for (AssetPack assetPack : assetPacks) {
                 patchManager.loadPatchAssets(assetPack);
             }
+
+            initializeOverrideDirectory();
 
             patchManager.applyAllPatches();
 
@@ -82,7 +82,6 @@ public class HytalorPlugin extends JavaPlugin {
     private void initializeOverrideDirectory() {
         try {
             Path filePath = OVERRIDES_TEMP_PATH;
-            boolean exists = Files.isDirectory(filePath);
 
             Path targetRoot = filePath.resolve("Server");
             Files.createDirectories(targetRoot);
@@ -127,18 +126,13 @@ public class HytalorPlugin extends JavaPlugin {
                     false
             );
 
-            BsonUtil.writeSync(filePath.resolve("manifest.json"), PluginManifest.CODEC, manifest, this.getLogger());
+            //BsonUtil.writeSync(filePath.resolve("manifest.json"), PluginManifest.CODEC, manifest, this.getLogger());
 
-            if (!exists) {
-                AssetModule.get().registerPack(
-                        "com.hypersonicsharkz:Hytalor-Overrides",
-                        filePath,
-                        manifest
-                );
-            } else {
-                AssetModule.get().getAssetMonitor().markChanged(filePath);
-            }
-
+            AssetModule.get().registerPack(
+                    "com.hypersonicsharkz:Hytalor-Overrides",
+                    filePath,
+                    manifest
+            );
         } catch (IOException e) {
             getLogger().at(Level.SEVERE).log("Failed to initialize Hytalor Overrides directory!", e);
             throw new RuntimeException(e);

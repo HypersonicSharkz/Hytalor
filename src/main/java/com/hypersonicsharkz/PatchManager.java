@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hypersonicsharkz.util.IndexNode;
 import com.hypersonicsharkz.util.JSONUtil;
+import com.hypersonicsharkz.util.QueryUtil;
 import com.hypixel.hytale.assetstore.AssetPack;
 import com.hypixel.hytale.common.util.FormatUtil;
 import com.hypixel.hytale.logger.sentry.SkipSentryException;
@@ -14,6 +15,7 @@ import com.hypixel.hytale.server.core.asset.monitor.AssetMonitor;
 import com.hypixel.hytale.server.core.asset.monitor.AssetMonitorHandler;
 import com.hypixel.hytale.server.core.asset.monitor.EventKind;
 import com.hypixel.hytale.server.core.util.io.FileUtil;
+import joptsimple.util.KeyValuePair;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -27,25 +29,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 public class PatchManager {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     private final Map<String, List<Path>> patchesMap = new HashMap<>(); //Cache for base -> patches
-    private final Map<Path, String> cachedPatchtoBaseMap = new HashMap<>(); //Cache for patchPath -> baseName
+    private final Map<Path, List<String>> cachedPatchtoBaseMap = new HashMap<>(); //Cache for patchPath -> baseName
+    private final Map<String, Path> cachedBasePathMap = new HashMap<>(); //Cache for baseName -> basePath
 
     public void addPatchAsset(String basePath, Path patchPath) {
-
-        String cachedBase = cachedPatchtoBaseMap.get(patchPath);
-        if (cachedBase != null && !cachedBase.equals(basePath)) {
-            //Cached base is different, remove from old base
-            List<Path> oldPatches = patchesMap.get(cachedBase);
-            if (oldPatches != null) {
-                oldPatches.remove(patchPath);
-            }
-            cachedPatchtoBaseMap.remove(patchPath);
-        }
-
         if (patchesMap.containsKey(basePath)) {
             List<Path> patches = patchesMap.get(basePath);
             int index = patches.indexOf(patchPath);
@@ -61,11 +54,16 @@ public class PatchManager {
             patchesMap.put(basePath, new ArrayList<>(List.of(patchPath)));
         }
 
-        cachedPatchtoBaseMap.put(patchPath, basePath);
+        cachedPatchtoBaseMap.computeIfAbsent(patchPath, k -> new ArrayList<>()).add(basePath);
     }
 
-    private Path getBaseAssetPath(String baseAssetPath) {
-        return AssetModule.get().getBaseAssetPack().getRoot().resolve("Server").resolve(baseAssetPath + ".json");
+    private List<Map.Entry<String, Path>> getBaseAssets(String pattern) {
+        Pattern regex = QueryUtil.globToRegex(pattern);
+
+        return cachedBasePathMap.entrySet()
+                .stream()
+                .filter(entry -> regex.matcher(entry.getKey()).matches())
+                .toList();
     }
 
     public void loadPatchAssets(AssetPack pack) {
@@ -74,6 +72,10 @@ public class PatchManager {
         HytalorPlugin.get().getLogger().at(Level.FINE).log(
                 "Loading patch assets for pack: " + pack.getName()
         );
+
+        if (!pack.getName().equals("com.hypersonicsharkz:Hytalor-Overrides")) {
+            cacheAssetPaths(pack);
+        }
 
         try {
             AssetMonitor assetMonitor = AssetModule.get().getAssetMonitor();
@@ -135,43 +137,55 @@ public class PatchManager {
         if (data == null)
             return;
 
-        JsonElement basePath = data.get("BaseAssetPath");
-        if (basePath == null)
+        JsonElement basePathPattern = data.get("BaseAssetPath");
+        if (basePathPattern == null)
             return;
 
-        addPatchAsset(basePath.getAsString(), path);
+        List<Map.Entry<String, Path>> baseAssets = getBaseAssets(basePathPattern.getAsString());
+        if (baseAssets.isEmpty()) {
+            HytalorPlugin.get().getLogger().at(Level.WARNING).log(
+                    "No base assets found for patch using base path pattern: " + basePathPattern.getAsString()
+            );
+            return;
+        }
 
-        if (refresh)
-            applyPatches(basePath.getAsString());
+        if (cachedPatchtoBaseMap.containsKey(path)) {
+            unloadPatch(path, false);
+        }
+
+        for (Map.Entry<String, Path> basePath : baseAssets) {
+            addPatchAsset(basePath.getKey(), path);
+
+            if (refresh)
+                applyPatches(basePath.getKey());
+        }
     }
 
-    public void savePatchAsset(JsonObject combined, String baseAssetPath) {
-        Path basePath = getBaseAssetPath(baseAssetPath);
-
-        Path patchPath = HytalorPlugin.OVERRIDES_TEMP_PATH.resolve(basePath.getParent().toString().substring(1));
-
+    public void savePatchAsset(JsonObject combined, Path overridePath) {
         try {
-            Files.createDirectories(patchPath);
-            Files.writeString(patchPath.resolve(basePath.getFileName().toString()), gson.toJson(combined));
+            Files.createDirectories(overridePath.getParent());
+            Files.writeString(overridePath, gson.toJson(combined));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void unloadPatch(Path path, boolean refresh) {
-        String basePath = cachedPatchtoBaseMap.get(path);
-        if (basePath == null)
+        List<String> baseNames = cachedPatchtoBaseMap.get(path);
+        if (baseNames == null)
             return;
 
-        List<Path> patches = patchesMap.get(basePath);
-        if (patches != null) {
-            patches.remove(path);
+        for (String baseName : baseNames) {
+            List<Path> patches = patchesMap.get(baseName);
+            if (patches != null) {
+                patches.remove(path);
+            }
+
+            if (refresh)
+                applyPatches(baseName);
         }
 
         cachedPatchtoBaseMap.remove(path);
-
-        if (refresh)
-            applyPatches(basePath);
     }
 
     private static boolean isJsonFile(@Nonnull Path path) {
@@ -182,21 +196,28 @@ public class PatchManager {
         return !path.getFileName().toString().isEmpty() && path.getFileName().toString().charAt(0) == '!';
     }
 
-    public void applyPatches(String basePath) {
+    public void applyPatches(String basePathPattern) {
+        List<Map.Entry<String, Path>> baseAssets = getBaseAssets(basePathPattern);
+        for (Map.Entry<String, Path> entry : baseAssets) {
+            applyPatches(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public void applyPatches(String baseName, Path basePath) {
         long start = System.nanoTime();
 
-        JsonObject combined = JSONUtil.readJSON(getBaseAssetPath(basePath));
+        JsonObject combined = JSONUtil.readJSON(basePath);
         if (combined == null) {
-            HytalorPlugin.get().getLogger().at(Level.SEVERE).log(
-                    "Base asset not found for path: " + basePath
+            HytalorPlugin.get().getLogger().at(Level.WARNING).log(
+                    "Base asset not found for path: " + baseName
             );
             return;
         }
 
-        List<Path> patches = patchesMap.get(basePath);
+        List<Path> patches = patchesMap.get(baseName);
         if (patches == null) {
             HytalorPlugin.get().getLogger().at(Level.INFO).log(
-                    "No patches found for base asset path: " + basePath
+                    "No patches found for base asset path: " + baseName
             );
             return;
         }
@@ -204,13 +225,13 @@ public class PatchManager {
         IndexNode rootIndexNode = new IndexNode("root", null, null);
 
         HytalorPlugin.get().getLogger().at(Level.INFO).log(
-                "Found " + patches.size() + " patches for base asset path: " + basePath + ". Applying patches..."
+                "Found " + patches.size() + " patches for base asset path: " + baseName + ". Applying patches..."
         );
 
         for (Path patch : patches) {
             JsonObject patchData = JSONUtil.readJSON(patch);
             if (patchData == null) {
-                HytalorPlugin.get().getLogger().at(Level.SEVERE).log(
+                HytalorPlugin.get().getLogger().at(Level.WARNING).log(
                         "Failed to read patch file at path: " + patch
                 );
                 continue;
@@ -224,16 +245,41 @@ public class PatchManager {
         }
 
         HytalorPlugin.get().getLogger().at(Level.INFO).log(
-                "Applied " + patches.size() + " patches for base asset path: " + basePath + ". Took %s",
+                "Applied " + patches.size() + " patches for base asset path: " + baseName + ". Took %s",
                 FormatUtil.nanosToString(System.nanoTime() - start)
         );
 
-        savePatchAsset(combined, basePath);
+        Path overridePath = HytalorPlugin.OVERRIDES_TEMP_PATH.resolve("Server/" + baseName + ".json");
+
+        savePatchAsset(combined, overridePath);
     }
 
     public void applyAllPatches() {
         for (String basePath : patchesMap.keySet()) {
             applyPatches(basePath);
+        }
+    }
+
+    private void cacheAssetPaths(AssetPack pack) {
+        Path path = pack.getRoot().resolve("Server");
+
+        try {
+            if (Files.isDirectory(path)) {
+                Files.walkFileTree(path, FileUtil.DEFAULT_WALK_TREE_OPTIONS_SET, Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+                    @Nonnull
+                    public FileVisitResult visitFile(@Nonnull Path file, @Nonnull BasicFileAttributes attrs) {
+                        if (PatchManager.isJsonFile(file) && !PatchManager.isIgnoredFile(file)) {
+                            String relativePath = path.relativize(file).toString().replace(".json", "");
+                            relativePath = relativePath.replace("\\", "/");
+                            cachedBasePathMap.put(relativePath, file);
+                        }
+
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
+            }
+        } catch (IOException e) {
+            throw new SkipSentryException(new RuntimeException(e));
         }
     }
 

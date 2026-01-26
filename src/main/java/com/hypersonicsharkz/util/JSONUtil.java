@@ -25,7 +25,7 @@ public class JSONUtil {
 
         } catch (Exception e) {
             HytalorPlugin.get().getLogger()
-                    .at(Level.SEVERE)
+                    .at(Level.WARNING)
                     .log("Failed to read JSON file at path: " + path, e);
             return null;
         }
@@ -44,6 +44,9 @@ public class JSONUtil {
             }
 
             if (!target.has(key)) {
+                if (sourceValue.isJsonArray())
+                    continue;
+
                 target.add(key, sourceValue);
                 continue;
             }
@@ -89,8 +92,8 @@ public class JSONUtil {
                     default ->
                         //Unknown operation
                         HytalorPlugin.get().getLogger()
-                                .at(Level.SEVERE)
-                                .log("Unknown array merge operation: " + op + "\n when merging array: \n" + sourceArray + "\n into: " + targetArray);
+                                .at(Level.WARNING)
+                                .log("Unknown array merge operation: " + op);
                 }
             }
         }
@@ -203,7 +206,7 @@ public class JSONUtil {
 
         if (findFirst && findAll) {
             HytalorPlugin.get().getLogger()
-                    .at(Level.SEVERE)
+                    .at(Level.WARNING)
                     .log("Array merge object cannot have both _find and _findAll properties:\n" + sourceObject);
             return new int[]{-1};
         }
@@ -250,8 +253,8 @@ public class JSONUtil {
         try {
             result = JsonPath.parse(targetObject.toString()).set(query, queryElement.getAsString()).jsonString();
         } catch (PathNotFoundException e) {
-            HytalorPlugin.get().getLogger().at(Level.SEVERE).log(
-                    "Query did not match any elements: " + query + "\n when applying to object: \n" + targetObject, e
+            HytalorPlugin.get().getLogger().at(Level.WARNING).log(
+                    "Query did not match any elements: " + query
             );
             return;
         }
@@ -269,6 +272,7 @@ public class JSONUtil {
 
     private static int[] queryIndexes(JsonElement findElement, JsonArray targetArray, boolean firstOnly) {
         GsonJsonProvider provider = new GsonJsonProvider();
+
         JsonArray queryResults = JsonPath.using(provider).parse(targetArray.toString()).read(findElement.getAsString());
 
         JsonArray indexesArray = new JsonArray();
