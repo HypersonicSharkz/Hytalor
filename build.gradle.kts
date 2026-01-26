@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.hypersonicsharkz"
-version = "1.0"
+version = "1.1"
 
 repositories {
     mavenCentral()
@@ -32,8 +32,8 @@ hytale {
     // Load mods from the local Hytale installation
     includeLocalMods.set(false)
 
-    serverJar.set(file("D:\\hytale-downloader\\2026.01.13-50e69c385\\Server\\HytaleServer.jar"))
-    assetsZip.set(file("D:\\hytale-downloader\\2026.01.13-50e69c385\\Server\\Assets.zip"))
+    serverJar.set(file("D:\\hytale-downloader\\2026.01.24-6e2d4fc36\\Server\\HytaleServer.jar"))
+    assetsZip.set(file("D:\\hytale-downloader\\2026.01.24-6e2d4fc36\\Assets.zip"))
 
     // Replace the version in the manifest with the project version
     manifest {

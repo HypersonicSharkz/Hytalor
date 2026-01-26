@@ -15,8 +15,11 @@ import com.hypixel.hytale.server.core.util.BsonUtil;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -79,9 +82,36 @@ public class HytalorPlugin extends JavaPlugin {
     private void initializeOverrideDirectory() {
         try {
             Path filePath = OVERRIDES_TEMP_PATH;
-            Files.createDirectories(filePath);
+            boolean exists = Files.isDirectory(filePath);
 
-            BsonUtil.writeSync(filePath.resolve("manifest.json"), PluginManifest.CODEC, new PluginManifest(
+            Path targetRoot = filePath.resolve("Server");
+            Files.createDirectories(targetRoot);
+            Path sourceRoot = AssetModule.get().getBaseAssetPack().getRoot().resolve("Server");
+
+            Files.walkFileTree(sourceRoot, new SimpleFileVisitor<Path>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    // Resolve the relative path from source into target
+                    Path relativePath = sourceRoot.relativize(dir);
+                    Path targetDir = targetRoot.resolve(relativePath.toString());
+
+                    // Create directory if it doesn't exist
+                    if (Files.notExists(targetDir)) {
+                        Files.createDirectories(targetDir);
+                    }
+
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                    // Skip files completely
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+
+            PluginManifest manifest = new PluginManifest(
                     "com.hypersonicsharkz",
                     "Hytalor-Overrides",
                     Semver.fromString("1.0.0"),
@@ -95,7 +125,19 @@ public class HytalorPlugin extends JavaPlugin {
                     new HashMap<>(),
                     new ArrayList<>(),
                     false
-            ), this.getLogger());
+            );
+
+            BsonUtil.writeSync(filePath.resolve("manifest.json"), PluginManifest.CODEC, manifest, this.getLogger());
+
+            if (!exists) {
+                AssetModule.get().registerPack(
+                        "com.hypersonicsharkz:Hytalor-Overrides",
+                        filePath,
+                        manifest
+                );
+            } else {
+                AssetModule.get().getAssetMonitor().markChanged(filePath);
+            }
 
         } catch (IOException e) {
             getLogger().at(Level.SEVERE).log("Failed to initialize Hytalor Overrides directory!", e);
