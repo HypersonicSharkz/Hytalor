@@ -1,0 +1,5 @@
+{
+  "$.ObjectArray[?(@.Property1 == 'Value1')].NestedArray[*].Property": "NewValue",
+  "$.ObjectArray[?(@.Property1 == 'Value1')].Property1": "NewValue",
+  "$.Property": "NewValue"
+}

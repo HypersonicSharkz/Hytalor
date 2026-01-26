@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("com.gradleup.shadow") version "9.3.1"
     id("app.ultradev.hytalegradle") version "1.6.8"
 }
 
@@ -14,6 +15,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.1")
+    implementation("com.jayway.jsonpath:json-path:2.10.0")
 
     testImplementation(files("D:\\Hytalor\\build\\hytale\\HytaleServer.jar"))
 }

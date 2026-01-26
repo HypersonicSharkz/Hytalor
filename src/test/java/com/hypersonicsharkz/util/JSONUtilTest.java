@@ -68,6 +68,18 @@ class JSONUtilTest {
         assertEquals(expected2, source);
     }
 
+    @Test
+    void queryValuePatch() throws URISyntaxException {
+        TestFiles testFiles = new TestFiles("queryValuePatch");
+        JsonObject patch = testFiles.patch;
+        JsonObject source = testFiles.source;
+        JsonObject expected = testFiles.expected;
+
+        JSONUtil.deepMerge(patch, source, new IndexNode("root", null, source));
+
+        assertEquals(expected, source);
+    }
+
     private static class TestFiles {
         JsonObject patch;
         JsonObject source;

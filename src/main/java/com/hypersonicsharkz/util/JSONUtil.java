@@ -6,6 +6,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.hypersonicsharkz.HytalorPlugin;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
+import com.jayway.jsonpath.spi.json.GsonJsonProvider;
 
 import java.io.BufferedReader;
 import java.nio.file.Files;
@@ -34,6 +37,11 @@ public class JSONUtil {
                 continue;
 
             JsonElement sourceValue = source.get(key);
+
+            if (isQuery(key)) {
+                resolveQuery(key, sourceValue, target);
+                continue;
+            }
 
             if (!target.has(key)) {
                 target.add(key, sourceValue);
@@ -66,9 +74,7 @@ public class JSONUtil {
 
             JsonObject sourceObject = sourceElement.getAsJsonObject();
 
-            JsonElement indexElement = sourceObject.get("_index");
-
-            int[] indexes = getIndexes(indexElement);
+            int[] indexes = resolveIndex(sourceObject, targetArray);
 
             String op = sourceObject.has("_op")
                     ? sourceObject.get("_op").getAsString()
@@ -171,6 +177,8 @@ public class JSONUtil {
         newElement.remove("_index");
         newElement.remove("_op");
         newElement.remove("_value");
+        newElement.remove("_find");
+        newElement.remove("_findAll");
         return newElement;
     }
 
@@ -187,6 +195,97 @@ public class JSONUtil {
         }
 
         return newArray;
+    }
+
+    private static int[] resolveIndex(JsonObject sourceObject, JsonArray targetArray) {
+        boolean findFirst = sourceObject.has("_find");
+        boolean findAll = sourceObject.has("_findAll");
+
+        if (findFirst && findAll) {
+            HytalorPlugin.get().getLogger()
+                    .at(Level.SEVERE)
+                    .log("Array merge object cannot have both _find and _findAll properties:\n" + sourceObject);
+            return new int[]{-1};
+        }
+
+        if (findFirst || findAll) {
+            return resolveFind(sourceObject, targetArray);
+        }
+
+        if (sourceObject.has("_index")) {
+            return getIndexes(sourceObject.get("_index"));
+        }
+
+        return new int[]{-1};
+    }
+
+    private static int[] resolveFind(JsonObject sourceObject, JsonArray targetArray) {
+        boolean findFirst = sourceObject.has("_find");
+
+        JsonElement findElement = sourceObject.get(findFirst ? "_find" : "_findAll");
+
+        if (findElement.isJsonObject()) {
+            JsonArray indexesArray = new JsonArray();
+            for (int i = 0; i < targetArray.size(); i++) {
+                JsonElement candidateElement = targetArray.get(i);
+                if (findElement.equals(candidateElement)) {
+                    indexesArray.add(i);
+
+                    if (findFirst)
+                        break;
+                }
+            }
+            return getIndexes(indexesArray);
+        }
+
+        if (isQuery(findElement.getAsString())) {
+            return queryIndexes(findElement, targetArray, findFirst);
+        }
+
+        return new int[]{-1};
+    }
+
+    private static void resolveQuery(String query, JsonElement queryElement, JsonObject targetObject) {
+        String result;
+        try {
+            result = JsonPath.parse(targetObject.toString()).set(query, queryElement.getAsString()).jsonString();
+        } catch (PathNotFoundException e) {
+            HytalorPlugin.get().getLogger().at(Level.SEVERE).log(
+                    "Query did not match any elements: " + query + "\n when applying to object: \n" + targetObject, e
+            );
+            return;
+        }
+
+        targetObject.keySet().clear();
+        JsonObject updatedObject = JsonParser.parseString(result).getAsJsonObject();
+        for (String key : updatedObject.keySet()) {
+            targetObject.add(key, updatedObject.get(key));
+        }
+    }
+
+    private static boolean isQuery(String key) {
+        return key.startsWith("$");
+    }
+
+    private static int[] queryIndexes(JsonElement findElement, JsonArray targetArray, boolean firstOnly) {
+        GsonJsonProvider provider = new GsonJsonProvider();
+        JsonArray queryResults = JsonPath.using(provider).parse(targetArray.toString()).read(findElement.getAsString());
+
+        JsonArray indexesArray = new JsonArray();
+
+        for (int i = 0; i < targetArray.size(); i++) {
+            JsonElement candidateElement = targetArray.get(i);
+            for (JsonElement resultElement : queryResults) {
+                if (resultElement.equals(candidateElement)) {
+                    indexesArray.add(i);
+                    if (firstOnly) {
+                        return getIndexes(indexesArray);
+                    }
+                }
+            }
+        }
+
+        return getIndexes(indexesArray);
     }
 
     private static int[] getIndexes(JsonElement indexElement) {
