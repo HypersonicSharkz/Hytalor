@@ -5,13 +5,6 @@ Hytalor is a light-weight asset patching framework designed to reduce mod confli
 
 Instead of overwriting entire JSON files, Hytalor allows smaller patches which are merged together into a final asset at runtime. 
 
-## 🛠 Status
-Hytalor is still under development, and doesn't support Build type assets yet (These mainly being NPC roles)
-
-Road Map:
-- More list searching methods, such as Regex or Key-Value checks
-- Automatically detect differences of entire Asset overrides and dynamically create patches instead. (Might be impossible)
-
 ## ✨ Key Features
 - **Conflict-Mitigation**\
   Multiple mods can modify the same asset without ovewriting each other.
@@ -209,3 +202,7 @@ The exact same can be achieved using structed JSON as well:
 - Adds new object before the found element
 
 ---
+
+## 🛠 Road Map
+- Use value from an asset when assigning a new value, or when querying.
+- Creating patches through code
