@@ -13,7 +13,20 @@ Road Map:
 - Automatically detect differences of entire Asset overrides and dynamically create patches instead. (Might be impossible)
 
 ## ✨ Key Features
-
+- **Conflict-Mitigation**\
+  Multiple mods can modify the same asset without ovewriting each other.
+  
+- **Wildcard Asset Targeting**\
+  Apply a single Patch to many assets using wildcards.
+  
+- **Smart Array Selection**\
+  Modify array elements using an index or special queries.
+  
+- **Array Patch Operations**\
+  Supports merge, replace, add, and remove operations on arrays.
+  
+- **Hot-Reloading**\
+  Changes to patch files are automatically resolved and applied when saved, like any other asset.
 
 
 ## 📦 Usage/Examples
