@@ -83,6 +83,50 @@ Hytalor recursivly merges JSON assets. Objects are merged by key, while arrays a
 > The _index refers to the index at the time of the patch being applied, meaning that it may point to somewhere else if another patch happens before it.
 > It is therefore advised to use `_find` queries instead if order is very important.
 
+### Example: Merge
+When merging, only the provided fields are updated, and all other fields remain untouched.
+The object is not replace, just partially modified.
+
+📄 Base Asset (Before)
+```json
+{
+  "Clouds": [
+    {
+      "Texture": "Sky/Clouds/Light_Base.png",
+      "Speed": 0.5,
+      "Opacity": 0.8
+    }
+  ]
+}
+```
+
+🧩 Hytalor Patch
+```json
+{
+  "BaseAssetPath": "Weathers/Zone1/Zone1_Sunny",
+  "Clouds": [
+    {
+      "_index": 0,
+      "_op": "merge",
+      "Speed": 0.7
+    }
+  ]
+}
+```
+
+✅ Resulting Asset (After)
+```json
+{
+  "Clouds": [
+    {
+      "Texture": "Sky/Clouds/Light_Base.png",
+      "Speed": 0.7,
+      "Opacity": 0.8
+    }
+  ]
+}
+```
+
 ### Example: Add
 ```json
 {
