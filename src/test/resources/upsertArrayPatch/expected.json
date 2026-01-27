@@ -1,0 +1,44 @@
+{
+  "Categories": [
+    {
+      "Id": "Arcane_Portals",
+      "Icon": "Icons/CraftingCategories/Arcane/Portal_Device.png",
+      "Name": "server.benchCategories.portals"
+    },
+    {
+      "Id": "Arcane_Misc",
+      "Icon": "Icons/CraftingCategories/Arcane/Bench_Memories.png",
+      "Name": "server.benchCategories.misc"
+    },
+    {
+      "Id": "Arcane_Spellbooks",
+      "Icon": "Icons/CraftingCategories/Arcane/Spellbook.png",
+      "Name": "server.benchCategories.spellbooks"
+    },
+    {
+      "Id": "Arcane_Hoods",
+      "Icon": "Icons/CraftingCategories/Arcane/Head.png",
+      "Name": "server.benchCategories.head"
+    },
+    {
+      "Id": "Arcane_Tunics",
+      "Icon": "Icons/CraftingCategories/Arcane/Chest.png",
+      "Name": "server.benchCategories.chest"
+    },
+    {
+      "Id": "Arcane_Gloves",
+      "Icon": "Icons/CraftingCategories/Arcane/Hands.png",
+      "Name": "server.benchCategories.hands"
+    },
+    {
+      "Id": "Arcane_Pants",
+      "Icon": "Icons/CraftingCategories/Arcane/Legs.png",
+      "Name": "server.benchCategories.legs"
+    },
+    {
+      "Id": "Arcane_Staves",
+      "Icon": "Icons/CraftingCategories/Arcane/Staff.png",
+      "Name": "server.benchCategories.implements"
+    }
+  ]
+}

@@ -98,6 +98,7 @@ public class JSONUtil {
                     case "remove" -> handleRemoveOperation(newArray, index);
                     case "replace" -> handleReplaceOperation(sourceObject, newArray, index);
                     case "merge" -> handleMergeOperation(sourceObject, newArray, index);
+                    case "upsert" -> newArray = handleUpsertOperation(sourceObject, newArray, index);
                     default ->
                         //Unknown operation
                         HytalorPlugin.get().getLogger()
@@ -108,6 +109,19 @@ public class JSONUtil {
         }
 
         return newArray;
+    }
+
+    private static JsonArray handleUpsertOperation(JsonObject sourceObject, JsonArray targetArray, int index) {
+        if (index >= 0 && index < targetArray.size()) { //Found index, perform merge
+            JsonObject targetElement = targetArray.get(index).getAsJsonObject();
+            JsonObject cleanedSource = getCleanedObject(sourceObject).getAsJsonObject();
+            deepMerge(cleanedSource, targetElement);
+
+            return targetArray;
+        } else { //Index not found, perform add
+            int indexToInsert = getUpsertIndex(sourceObject);
+            return handleAddOperation(sourceObject, targetArray, indexToInsert);
+        }
     }
 
     private static JsonArray handleAddOperation(JsonObject sourceObject, JsonArray targetArray, int index) {
@@ -221,7 +235,7 @@ public class JSONUtil {
             JsonArray indexesArray = new JsonArray();
             for (int i = 0; i < targetArray.size(); i++) {
                 JsonElement candidateElement = targetArray.get(i);
-                if (findElement.equals(candidateElement)) {
+                if (matchesFindObject(findElement.getAsJsonObject(), candidateElement)) {
                     indexesArray.add(i);
 
                     if (findFirst)
@@ -236,6 +250,26 @@ public class JSONUtil {
         }
 
         return new int[]{-1};
+    }
+
+    private static boolean matchesFindObject(JsonObject findObject, JsonElement candidateElement) {
+        if (!candidateElement.isJsonObject())
+            return false;
+
+        JsonObject candidateObject = candidateElement.getAsJsonObject();
+
+        for (String key : findObject.keySet()) {
+            if (!candidateObject.has(key))
+                return false;
+
+            JsonElement findValue = findObject.get(key);
+            JsonElement candidateValue = candidateObject.get(key);
+
+            if (!findValue.equals(candidateValue))
+                return false;
+        }
+
+        return true;
     }
 
     private static void resolveQuery(String query, JsonElement queryElement, JsonObject targetObject) {
@@ -261,8 +295,6 @@ public class JSONUtil {
     }
 
     private static int[] queryIndexes(JsonElement findElement, JsonArray targetArray, boolean firstOnly) {
-
-
         JsonArray queryResults = JsonPath.using(provider).parse(targetArray.toString()).read(findElement.getAsString());
 
         JsonArray indexesArray = new JsonArray();
@@ -286,16 +318,29 @@ public class JSONUtil {
         int[] indexes = new int[] { -1 }; //Default to -1 (no index specified)
 
         if (indexElement != null) {
-            if (indexElement.isJsonArray()) {
+            if (indexElement.isJsonArray() && !indexElement.getAsJsonArray().isEmpty()) {
                 indexes = new int[indexElement.getAsJsonArray().size()];
                 for (int i = 0; i < indexElement.getAsJsonArray().size(); i++) {
                     indexes[i] = indexElement.getAsJsonArray().get(i).getAsInt();
                 }
-            } else {
+            } else if (indexElement.isJsonPrimitive() && indexElement.getAsJsonPrimitive().isNumber()) {
                 indexes = new int[] { indexElement.getAsInt() };
             }
         }
         return indexes;
+    }
+
+    private static int getUpsertIndex(JsonObject sourceElement) {
+        JsonElement indexElement = sourceElement.get("_index");
+
+        if (indexElement != null && indexElement.isJsonPrimitive()) {
+            return indexElement.getAsInt();
+        }
+
+        HytalorPlugin.get().getLogger().at(Level.WARNING)
+                .log("Upsert operation requires a single integer _index value. Defaulting to -1 (append to end).");
+
+        return -1; //Default to -1 (no index specified)
     }
 
     private static boolean isArrayPatch(JsonArray array) {

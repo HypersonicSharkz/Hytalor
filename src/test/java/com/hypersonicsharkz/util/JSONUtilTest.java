@@ -1,6 +1,9 @@
 package com.hypersonicsharkz.util;
 
 import com.google.gson.JsonObject;
+import com.hypersonicsharkz.HytalorPlugin;
+import com.hypixel.hytale.logger.backend.HytaleLogManager;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -69,6 +72,18 @@ class JSONUtilTest {
     @Test
     void queryValuePatch() throws URISyntaxException {
         TestFiles testFiles = new TestFiles("queryValuePatch");
+        JsonObject patch = testFiles.patch;
+        JsonObject source = testFiles.source;
+        JsonObject expected = testFiles.expected;
+
+        JSONUtil.deepMerge(patch, source);
+
+        assertEquals(expected, source);
+    }
+
+    @Test
+    void upsertArrayPatch() throws URISyntaxException {
+        TestFiles testFiles = new TestFiles("upsertArrayPatch");
         JsonObject patch = testFiles.patch;
         JsonObject source = testFiles.source;
         JsonObject expected = testFiles.expected;

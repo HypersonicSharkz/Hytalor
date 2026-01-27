@@ -1,0 +1,64 @@
+{
+  "Categories": [
+    {
+      "_op": "upsert",
+      "_index": -1,
+      "_find": {
+          "Id": "Arcane_Spellbooks"
+      },
+      "Id": "Arcane_Spellbooks",
+      "Icon": "Icons/CraftingCategories/Arcane/Spellbook.png",
+      "Name": "server.benchCategories.spellbooks"
+    },
+    {
+      "_op": "upsert",
+      "_index": -1,
+      "_find": {
+        "Id": "Arcane_Staves"
+      },
+      "Id": "Arcane_Staves",
+      "Icon": "Icons/CraftingCategories/Arcane/Staff.png",
+      "Name": "server.benchCategories.implements"
+    },
+    {
+      "_op": "upsert",
+      "_index": -1,
+      "_find": {
+        "Id": "Arcane_Hoods"
+      },
+      "Id": "Arcane_Hoods",
+      "Icon": "Icons/CraftingCategories/Arcane/Head.png",
+      "Name": "server.benchCategories.head"
+    },
+    {
+      "_op": "upsert",
+      "_index": -1,
+      "_find": {
+        "Id": "Arcane_Tunics"
+      },
+      "Id": "Arcane_Tunics",
+      "Icon": "Icons/CraftingCategories/Arcane/Chest.png",
+      "Name": "server.benchCategories.chest"
+    },
+    {
+      "_op": "upsert",
+      "_index": -1,
+      "_find": {
+        "Id": "Arcane_Gloves"
+      },
+      "Id": "Arcane_Gloves",
+      "Icon": "Icons/CraftingCategories/Arcane/Hands.png",
+      "Name": "server.benchCategories.hands"
+    },
+    {
+      "_op": "upsert",
+      "_index": -1,
+      "_find": {
+        "Id": "Arcane_Pants"
+      },
+      "Id": "Arcane_Pants",
+      "Icon": "Icons/CraftingCategories/Arcane/Legs.png",
+      "Name": "server.benchCategories.legs"
+    }
+  ]
+}
