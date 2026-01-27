@@ -127,6 +127,73 @@ The object is not replace, just partially modified.
 }
 ```
 
+### Patching Primitive Arrays
+Primitve arrays are a bit different to Patch, due to it expecting primitive values and not objects.
+
+📄 Base Asset (Before)
+```json
+{
+  //...
+  "Categories": [
+    {
+      "_op": "add",
+      "_value": "Furniture.Benches"
+    }
+  ],
+  "Tags": {
+    "Type": [
+      "Bench"
+    ]
+  }
+  //...
+}
+```
+
+🧩 Hytalor Patch
+Adding to the end of the array is simple:
+```json
+{
+  "BaseAssetPath": "Item/Items/Bench/Bench_Arcane",
+  "Categories": [
+    {
+      "_op": "add",
+      "_value": "Custom.Category"
+    }
+  ]
+}
+```
+
+Overwriting the array can be done using the Query system:
+```json
+{
+  "BaseAssetPath": "Item/Items/Bench/Bench_Arcane",
+  "$.Tags.Type": [
+    "Custom.Type"
+  ]
+}
+```
+
+✅ Resulting Asset (After both patches)
+```json
+{
+  //...
+  "Categories": [
+    "Furniture.Benches",
+    "Custom.Category"
+  ],
+  "Tags": {
+    "Type": [
+      "Custom.Type"
+    ]
+  }
+  //...
+}
+```
+
+
+
+
+
 ### Example: Add
 ```json
 {
