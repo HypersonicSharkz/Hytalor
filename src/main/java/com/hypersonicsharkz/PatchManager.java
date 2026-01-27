@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.hypersonicsharkz.util.IndexNode;
 import com.hypersonicsharkz.util.JSONUtil;
 import com.hypersonicsharkz.util.QueryUtil;
 import com.hypixel.hytale.assetstore.AssetPack;
@@ -15,7 +14,6 @@ import com.hypixel.hytale.server.core.asset.monitor.AssetMonitor;
 import com.hypixel.hytale.server.core.asset.monitor.AssetMonitorHandler;
 import com.hypixel.hytale.server.core.asset.monitor.EventKind;
 import com.hypixel.hytale.server.core.util.io.FileUtil;
-import joptsimple.util.KeyValuePair;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -222,8 +220,6 @@ public class PatchManager {
             return;
         }
 
-        IndexNode rootIndexNode = new IndexNode("root", null, null);
-
         HytalorPlugin.get().getLogger().at(Level.INFO).log(
                 "Found " + patches.size() + " patches for base asset path: " + baseName + ". Applying patches..."
         );
@@ -237,7 +233,7 @@ public class PatchManager {
                 continue;
             }
 
-            JSONUtil.deepMerge(patchData, combined, rootIndexNode);
+            JSONUtil.deepMerge(patchData, combined);
 
             HytalorPlugin.get().getLogger().at(Level.INFO).log(
                     "Applied patch: " + patch

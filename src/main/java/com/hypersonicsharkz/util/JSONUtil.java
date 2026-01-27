@@ -31,7 +31,7 @@ public class JSONUtil {
         }
     }
 
-    public static void deepMerge(JsonObject source, JsonObject target, IndexNode indexNode) {
+    public static void deepMerge(JsonObject source, JsonObject target) {
         for (String key: source.keySet()) {
             if (key.equals("BaseAssetPath"))
                 continue;
@@ -53,20 +53,18 @@ public class JSONUtil {
 
             JsonElement targetValue = target.get(key);
 
-            IndexNode childNode = indexNode.getOrCreateChild(key, targetValue);
-
             // existing value for "key" - recursively deep merge:
             if (sourceValue.isJsonObject() && targetValue.isJsonObject()) {
-                deepMerge(sourceValue.getAsJsonObject(), targetValue.getAsJsonObject(), childNode);
+                deepMerge(sourceValue.getAsJsonObject(), targetValue.getAsJsonObject());
             } else if (sourceValue.isJsonArray() && targetValue.isJsonArray()) {
-                target.add(key, mergeArray(sourceValue.getAsJsonArray(), targetValue.getAsJsonArray(), childNode));
+                target.add(key, mergeArray(sourceValue.getAsJsonArray(), targetValue.getAsJsonArray()));
             } else {
                 target.add(key, sourceValue);
             }
         }
     }
 
-    public static JsonArray mergeArray(JsonArray sourceArray, JsonArray targetArray, IndexNode indexNode) {
+    public static JsonArray mergeArray(JsonArray sourceArray, JsonArray targetArray) {
         JsonArray newArray = targetArray.deepCopy();
 
         for (JsonElement sourceElement : sourceArray) {
@@ -85,10 +83,10 @@ public class JSONUtil {
 
             for (int index : indexes) {
                 switch (op) {
-                    case "add" -> newArray = handleAddOperation(sourceObject, newArray, index, indexNode);
-                    case "remove" -> handleRemoveOperation(newArray, index, indexNode);
-                    case "replace" -> handleReplaceOperation(sourceObject, newArray, index, indexNode);
-                    case "merge" -> handleMergeOperation(sourceObject, newArray, index, indexNode);
+                    case "add" -> newArray = handleAddOperation(sourceObject, newArray, index);
+                    case "remove" -> handleRemoveOperation(newArray, index);
+                    case "replace" -> handleReplaceOperation(sourceObject, newArray, index);
+                    case "merge" -> handleMergeOperation(sourceObject, newArray, index);
                     default ->
                         //Unknown operation
                         HytalorPlugin.get().getLogger()
@@ -101,10 +99,8 @@ public class JSONUtil {
         return newArray;
     }
 
-    private static JsonArray handleAddOperation(JsonObject sourceObject, JsonArray targetArray, int _index, IndexNode indexNode) {
+    private static JsonArray handleAddOperation(JsonObject sourceObject, JsonArray targetArray, int index) {
         JsonArray newArray = targetArray.deepCopy();
-
-        int index = indexNode.getMappedIndex(_index, true);
 
         JsonElement newElement = getCleanedObject(sourceObject);
 
@@ -114,9 +110,6 @@ public class JSONUtil {
             } else { //Index out of bounds, add to the end
                 newArray.add(newElement);
             }
-
-            //Update index mapping
-            indexNode.incrementAbove(_index);
         } else { //No index specified, add to the end
             newArray.add(newElement);
         }
@@ -124,34 +117,23 @@ public class JSONUtil {
         return newArray;
     }
 
-    private static void handleRemoveOperation(JsonArray targetArray, int _index, IndexNode indexNode) {
-        int index = indexNode.getMappedIndex(_index, false);
-
+    private static void handleRemoveOperation(JsonArray targetArray, int index) {
         if (index < 0 || index >= targetArray.size())
             return;
 
         targetArray.remove(index);
-
-        //Update index mapping
-        indexNode.decrementAbove(_index);
-        indexNode.invalidateIndex(_index);
-
     }
 
-    private static void handleReplaceOperation(JsonObject sourceObject, JsonArray targetArray, int _index, IndexNode indexNode) {
-        int index = indexNode.getMappedIndex(_index, false);
-
+    private static void handleReplaceOperation(JsonObject sourceObject, JsonArray targetArray, int index) {
         if (index < 0 || index >= targetArray.size())
             return;
 
         JsonElement newElement = getCleanedObject(sourceObject);
-        targetArray.set(index, newElement);
 
+        targetArray.set(index, newElement);
     }
 
-    private static void handleMergeOperation(JsonObject sourceObject, JsonArray targetArray, int _index, IndexNode indexNode) {
-        int index = indexNode.getMappedIndex(_index, false);
-
+    private static void handleMergeOperation(JsonObject sourceObject, JsonArray targetArray, int index) {
         if (index < 0 || index >= targetArray.size())
             return;
 
@@ -161,14 +143,11 @@ public class JSONUtil {
 
         JsonElement newElement = getCleanedObject(sourceObject);
         if (!newElement.isJsonObject()) {
-            handleReplaceOperation(sourceObject, targetArray, index, indexNode);
+            handleReplaceOperation(sourceObject, targetArray, index);
             return;
         }
 
-        IndexNode childNode = indexNode.getOrCreateChild(String.valueOf(_index), targetElement);
-
-        deepMerge(newElement.getAsJsonObject(), targetElement.getAsJsonObject(), childNode);
-
+        deepMerge(newElement.getAsJsonObject(), targetElement.getAsJsonObject());
     }
 
     private static JsonElement getCleanedObject(JsonObject sourceObject) {

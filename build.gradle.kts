@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.hypersonicsharkz"
-version = "1.1"
+version = "1.2"
 
 repositories {
     mavenCentral()

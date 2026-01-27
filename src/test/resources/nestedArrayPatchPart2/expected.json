@@ -8,16 +8,14 @@
           "RetainProperty": "RetainValue"
         },
         {
-          "SubProperty5": "SubValue5"
+          "ShouldBeIgnored": "Value"
         },
         {
-          "SubProperty7": "SubValue7"
+          "SubProperty7": "SubValue7",
+          "SubProperty6": "NewSubValue6"
         },
         {
-          "SubProperty8": "SubValue8"
-        },
-        {
-          "SubProperty6": "NewSubValue6",
+          "SubProperty6": "SubValue6",
           "ReplacedProperty": "ReplacedValue"
         }
       ]

@@ -17,7 +17,7 @@ class JSONUtilTest {
         JsonObject source = testFiles.source;
         JsonObject expected = testFiles.expected;
 
-        JSONUtil.deepMerge(patch, source, new IndexNode("root", null, source));
+        JSONUtil.deepMerge(patch, source);
 
         assertEquals(expected, source);
     }
@@ -29,7 +29,7 @@ class JSONUtilTest {
         JsonObject source = testFiles.source;
         JsonObject expected = testFiles.expected;
 
-        JSONUtil.deepMerge(patch, source, new IndexNode("root", null, source));
+        JSONUtil.deepMerge(patch, source);
 
         assertEquals(expected, source);
     }
@@ -41,7 +41,7 @@ class JSONUtilTest {
         JsonObject source = testFiles.source;
         JsonObject expected = testFiles.expected;
 
-        JSONUtil.deepMerge(patch, source, new IndexNode("root", null, source));
+        JSONUtil.deepMerge(patch, source);
 
         assertEquals(expected, source);
     }
@@ -53,9 +53,7 @@ class JSONUtilTest {
         JsonObject source = testFiles.source;
         JsonObject expected = testFiles.expected;
 
-        IndexNode node = new IndexNode("root", null, source);
-
-        JSONUtil.deepMerge(patch, source, node);
+        JSONUtil.deepMerge(patch, source);
 
         assertEquals(expected, source);
 
@@ -63,7 +61,7 @@ class JSONUtilTest {
         JsonObject patch2 = testFiles2.patch;
         JsonObject expected2 = testFiles2.expected;
 
-        JSONUtil.deepMerge(patch2, source, node);
+        JSONUtil.deepMerge(patch2, source);
 
         assertEquals(expected2, source);
     }
@@ -75,7 +73,7 @@ class JSONUtilTest {
         JsonObject source = testFiles.source;
         JsonObject expected = testFiles.expected;
 
-        JSONUtil.deepMerge(patch, source, new IndexNode("root", null, source));
+        JSONUtil.deepMerge(patch, source);
 
         assertEquals(expected, source);
     }
