@@ -8,12 +8,14 @@ import com.hypixel.hytale.server.core.asset.AssetModule;
 import com.hypixel.hytale.server.core.asset.AssetPackRegisterEvent;
 import com.hypixel.hytale.server.core.asset.AssetPackUnregisterEvent;
 import com.hypixel.hytale.server.core.asset.LoadAssetEvent;
+import com.hypixel.hytale.server.core.event.events.BootEvent;
 import com.hypixel.hytale.server.core.plugin.JavaPlugin;
 import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
 import com.hypixel.hytale.server.core.plugin.PluginManager;
 import com.hypixel.hytale.server.core.util.BsonUtil;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -23,6 +25,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.logging.Level;
 
 public class HytalorPlugin extends JavaPlugin {
@@ -41,6 +44,20 @@ public class HytalorPlugin extends JavaPlugin {
         super(init);
     }
 
+    @Nullable
+    @Override
+    public CompletableFuture<Void> preLoad() {
+        //Remove manifest if it exists from previous versions
+        Path manifestPath = OVERRIDES_TEMP_PATH.resolve("manifest.json");
+        try {
+            Files.deleteIfExists(manifestPath);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return super.preLoad();
+    }
+
     @Override
     protected void setup() {
         instance = this;
@@ -55,10 +72,6 @@ public class HytalorPlugin extends JavaPlugin {
             for (AssetPack assetPack : assetPacks) {
                 patchManager.loadPatchAssets(assetPack);
             }
-
-            initializeOverrideDirectory();
-
-            patchManager.applyAllPatches();
 
             this.getLogger()
                     .at(Level.INFO)
@@ -77,6 +90,17 @@ public class HytalorPlugin extends JavaPlugin {
             patchManager.unloadPatchAssets(event.getAssetPack());
             patchManager.applyAllPatches();
         });
+    }
+
+    @Override
+    protected void start() {
+        super.start();
+
+        initializeOverrideDirectory();
+
+        patchManager.applyAllPatches();
+
+        registerAssetPack();
     }
 
     private void initializeOverrideDirectory() {
@@ -109,33 +133,35 @@ public class HytalorPlugin extends JavaPlugin {
                     return FileVisitResult.CONTINUE;
                 }
             });
-
-            PluginManifest manifest = new PluginManifest(
-                    "com.hypersonicsharkz",
-                    "Hytalor-Overrides",
-                    Semver.fromString("1.0.0"),
-                    "Temp folder for Hytalor asset overrides",
-                    new ArrayList<>(),
-                    "",
-                    null,
-                    null,
-                    new HashMap<>(),
-                    new HashMap<>(),
-                    new HashMap<>(),
-                    new ArrayList<>(),
-                    false
-            );
-
-            //BsonUtil.writeSync(filePath.resolve("manifest.json"), PluginManifest.CODEC, manifest, this.getLogger());
-
-            AssetModule.get().registerPack(
-                    "com.hypersonicsharkz:Hytalor-Overrides",
-                    filePath,
-                    manifest
-            );
         } catch (IOException e) {
             getLogger().at(Level.SEVERE).log("Failed to initialize Hytalor Overrides directory!", e);
             throw new RuntimeException(e);
         }
+    }
+
+    private void registerAssetPack() {
+        Path filePath = OVERRIDES_TEMP_PATH;
+
+        PluginManifest manifest = new PluginManifest(
+                "com.hypersonicsharkz",
+                "Hytalor-Overrides",
+                Semver.fromString("1.0.0"),
+                "Temp folder for Hytalor asset overrides",
+                new ArrayList<>(),
+                "",
+                null,
+                null,
+                new HashMap<>(),
+                new HashMap<>(),
+                new HashMap<>(),
+                new ArrayList<>(),
+                false
+        );
+
+        AssetModule.get().registerPack(
+                "com.hypersonicsharkz:Hytalor-Overrides",
+                filePath,
+                manifest
+        );
     }
 }
