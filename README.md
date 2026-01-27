@@ -74,12 +74,14 @@ Hytalor recursivly merges JSON assets. Objects are merged by key, while arrays a
 | ------------------- | -------------------------------------------- |
 | `merge` *(default)* | Merge provided fields into the element     |
 | `replace`           | Replace the entire element       |
-| `add`               | Insert a new element (or append if no index) |
+| `add`               | Insert a new element (or append to end if no index / find) |
+| `addBefore` | Inserts element before `_index` or matched elements (or adds to front if no index / find) |
+| `addAfter` | Inserts element after `_index` or matched elements (or append to end if no index / find) |
 | `remove`            | Remove the element               |
 
 > [!IMPORTANT]  
-> The _index refers to the index in the base asset ALWAYS, meaning that the index is automatically updated to correctly point to where the base element is.
-> If the base index was removed by a previous patch, `merge`, `replace`, and `remove` does nothing. (Subject to change)
+> The _index refers to the index at the time of the patch being applied, meaning that it may point to somewhere else if another patch happens before it.
+> It is therefore advised to use `_find` queries instead if order is very important.
 
 ### Example: Add
 ```json
@@ -111,6 +113,8 @@ Hytalor recursivly merges JSON assets. Objects are merged by key, while arrays a
 #### What this does
 - Applies to the `Template_Animal_Neutral` asset.
 - Adds new object to `Instructions`, at begging of original array.
+
+Using `addBefore` and removing the `_index` results in the same.
   
 ---
 
