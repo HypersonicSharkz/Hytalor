@@ -10,6 +10,16 @@
     {
       "_op": "add",
       "Property3": "Value3"
+    },
+    {
+      "_op": "addAfter",
+      "_index": 0,
+      "Property4": "Value4"
+    },
+    {
+      "_op": "addBefore",
+      "_index": 1,
+      "Property5": "Value5"
     }
   ],
   "NumberArray": [
