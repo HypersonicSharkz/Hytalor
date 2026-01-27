@@ -84,6 +84,8 @@ public class JSONUtil {
             for (int index : indexes) {
                 switch (op) {
                     case "add" -> newArray = handleAddOperation(sourceObject, newArray, index);
+                    case "addBefore" -> newArray = handleAddOperation(sourceObject, newArray, index == -1 ? 0 : index);
+                    case "addAfter" -> newArray = handleAddOperation(sourceObject, newArray, index == -1 ? -1 : index + 1);
                     case "remove" -> handleRemoveOperation(newArray, index);
                     case "replace" -> handleReplaceOperation(sourceObject, newArray, index);
                     case "merge" -> handleMergeOperation(sourceObject, newArray, index);
