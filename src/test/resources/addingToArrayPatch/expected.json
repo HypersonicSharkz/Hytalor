@@ -5,6 +5,10 @@
     "Value3",
     "Value4"
   ],
+  "OverrideArray": [
+    "NewValue1",
+    "NewValue2"
+  ],
   "ObjectArray": [
     {
       "Property1": "Value1"

@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 
 public class JSONUtil {
+    private static final GsonJsonProvider provider = new GsonJsonProvider();
+
     public static JsonObject readJSON(Path path) {
         try (
                 BufferedReader fileReader = Files.newBufferedReader(path);
@@ -239,7 +241,7 @@ public class JSONUtil {
     private static void resolveQuery(String query, JsonElement queryElement, JsonObject targetObject) {
         String result;
         try {
-            result = JsonPath.parse(targetObject.toString()).set(query, queryElement.getAsString()).jsonString();
+            result = JsonPath.using(provider).parse(targetObject.toString()).set(query, queryElement).jsonString();
         } catch (PathNotFoundException e) {
             HytalorPlugin.get().getLogger().at(Level.WARNING).log(
                     "Query did not match any elements: " + query
@@ -259,7 +261,7 @@ public class JSONUtil {
     }
 
     private static int[] queryIndexes(JsonElement findElement, JsonArray targetArray, boolean firstOnly) {
-        GsonJsonProvider provider = new GsonJsonProvider();
+
 
         JsonArray queryResults = JsonPath.using(provider).parse(targetArray.toString()).read(findElement.getAsString());
 

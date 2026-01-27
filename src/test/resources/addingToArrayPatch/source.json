@@ -3,6 +3,10 @@
     "Value1",
     "Value2"
   ],
+  "OverrideArray": [
+    "OldValue1",
+    "OldValue2"
+  ],
   "ObjectArray": [
     {
       "Property1": "Value1"

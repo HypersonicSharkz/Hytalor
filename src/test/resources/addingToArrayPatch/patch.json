@@ -35,5 +35,9 @@
       "_value": "NewValue1"
     },
     "NewValue2"
+  ],
+  "$.OverrideArray": [
+    "NewValue1",
+    "NewValue2"
   ]
 }
