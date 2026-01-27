@@ -28,5 +28,12 @@
       "_value": 4
     },
     5
+  ],
+  "NewArray": [
+    {
+      "_op": "add",
+      "_value": "NewValue1"
+    },
+    "NewValue2"
   ]
 }

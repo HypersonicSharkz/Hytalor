@@ -83,19 +83,21 @@ public class HytalorPlugin extends JavaPlugin {
         });
 
         getEventRegistry().register(AssetPackRegisterEvent.class, event -> {
+            if (event.getAssetPack().getName().equals("com.hypersonicsharkz:Hytalor-Overrides")) {
+                return;
+            }
             patchManager.loadPatchAssets(event.getAssetPack());
-            patchManager.applyAllPatches();
         });
+
         getEventRegistry().register(AssetPackUnregisterEvent.class, event -> {
             patchManager.unloadPatchAssets(event.getAssetPack());
             patchManager.applyAllPatches();
         });
+
+        getEventRegistry().register(BootEvent.class, _ -> initializePatches());
     }
 
-    @Override
-    protected void start() {
-        super.start();
-
+    protected void initializePatches() {
         initializeOverrideDirectory();
 
         patchManager.applyAllPatches();

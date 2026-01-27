@@ -44,10 +44,7 @@ public class JSONUtil {
             }
 
             if (!target.has(key)) {
-                if (sourceValue.isJsonArray())
-                    continue;
-
-                target.add(key, sourceValue);
+                addNewField(target, key, sourceValue);
                 continue;
             }
 
@@ -62,6 +59,16 @@ public class JSONUtil {
                 target.add(key, sourceValue);
             }
         }
+    }
+
+    private static void addNewField(JsonObject target, String key, JsonElement value) {
+        if (value.isJsonArray() && isArrayPatch(value.getAsJsonArray())) {
+            JsonArray newArray = mergeArray(value.getAsJsonArray(), new JsonArray());
+            target.add(key, newArray);
+            return;
+        }
+
+        target.add(key, value);
     }
 
     public static JsonArray mergeArray(JsonArray sourceArray, JsonArray targetArray) {
@@ -287,5 +294,19 @@ public class JSONUtil {
             }
         }
         return indexes;
+    }
+
+    private static boolean isArrayPatch(JsonArray array) {
+        if (array.isEmpty())
+            return false;
+
+        JsonElement firstElement = array.get(0);
+        if (!firstElement.isJsonObject())
+            return false;
+
+        return firstElement.getAsJsonObject().has("_op") ||
+               firstElement.getAsJsonObject().has("_index") ||
+               firstElement.getAsJsonObject().has("_find") ||
+               firstElement.getAsJsonObject().has("_findAll");
     }
 }

@@ -28,5 +28,9 @@
     3,
     4,
     5
+  ],
+  "NewArray": [
+    "NewValue1",
+    "NewValue2"
   ]
 }
