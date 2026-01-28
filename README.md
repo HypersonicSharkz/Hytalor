@@ -79,7 +79,7 @@ Hytalor recursivly merges JSON assets. Objects are merged by key, while arrays a
 | `add`               | Insert a new element (or append to end if no index / find) |
 | `addBefore` | Inserts element before `_index` or matched elements (or adds to front if no index / find) |
 | `addAfter` | Inserts element after `_index` or matched elements (or append to end if no index / find) |
-| `upsert`   | If element is found `_find` merge into it, otherwise add new element at `_index` (or at end if not specified) |
+| `upsert`   | If `_find` matches existing element, merge into it, otherwise add new element at `_index` (or at end if not specified) |
 | `remove`            | Remove the element               |
 
 > [!IMPORTANT]  
