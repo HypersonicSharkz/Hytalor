@@ -98,6 +98,7 @@ public class HytalorPlugin extends JavaPlugin {
     }
 
     protected void initializePatches() {
+        clearOverrideDirectory();
         initializeOverrideDirectory();
 
         patchManager.applyAllPatches();
@@ -137,6 +138,31 @@ public class HytalorPlugin extends JavaPlugin {
             });
         } catch (IOException e) {
             getLogger().at(Level.SEVERE).log("Failed to initialize Hytalor Overrides directory!", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void clearOverrideDirectory() {
+        if (!Files.isDirectory(OVERRIDES_TEMP_PATH)) {
+            return;
+        }
+
+        try {
+            Files.walkFileTree(OVERRIDES_TEMP_PATH, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    Files.delete(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            getLogger().at(Level.SEVERE).log("Failed to clear Hytalor Overrides directory!", e);
             throw new RuntimeException(e);
         }
     }
