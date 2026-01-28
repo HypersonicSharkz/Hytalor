@@ -11,8 +11,8 @@ Hytalor works by leveraging Hytale’s normal asset loading order, where later-l
 It creates a new AssetPack that loads after the base game and all other plugins. 
 Instead of replacing assets directly, Hytalor:
 - Collects all patches targeting a base asset
-- Merges those patches into a single, fully combined asset
-- Writes the merged result into the Hytalor AssetPack using the same asset path as the original
+- Creates a single, fully combined asset by copying the base asset and applying each patch in order
+- Writes the combined result into the Hytalor AssetPack using the same asset path as the base asset
 
 When Hytale loads assets, it detects this AssetPack last, causing the patched versions to override the originals automatically.
 
