@@ -154,12 +154,6 @@ public class HytalorPlugin extends JavaPlugin {
                     Files.delete(file);
                     return FileVisitResult.CONTINUE;
                 }
-
-                @Override
-                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                    Files.delete(dir);
-                    return FileVisitResult.CONTINUE;
-                }
             });
         } catch (IOException e) {
             getLogger().at(Level.SEVERE).log("Failed to clear Hytalor Overrides directory!", e);
