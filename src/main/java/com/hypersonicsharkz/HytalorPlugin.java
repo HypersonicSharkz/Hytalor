@@ -97,8 +97,15 @@ public class HytalorPlugin extends JavaPlugin {
         getEventRegistry().register(BootEvent.class, _ -> initializePatches());
     }
 
+    @Override
+    protected void shutdown() {
+        super.shutdown();
+
+        clearOverrideDirectory(true);
+    }
+
     protected void initializePatches() {
-        clearOverrideDirectory();
+        clearOverrideDirectory(false);
         initializeOverrideDirectory();
 
         patchManager.applyAllPatches();
@@ -142,7 +149,7 @@ public class HytalorPlugin extends JavaPlugin {
         }
     }
 
-    private void clearOverrideDirectory() {
+    private void clearOverrideDirectory(boolean includingDirectories) {
         if (!Files.isDirectory(OVERRIDES_TEMP_PATH)) {
             return;
         }
@@ -152,6 +159,14 @@ public class HytalorPlugin extends JavaPlugin {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    if (includingDirectories)
+                        Files.delete(dir);
+
                     return FileVisitResult.CONTINUE;
                 }
             });
