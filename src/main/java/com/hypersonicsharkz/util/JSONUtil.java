@@ -84,7 +84,7 @@ public class JSONUtil {
 
             JsonObject sourceObject = sourceElement.getAsJsonObject();
 
-            int[] indexes = resolveIndex(sourceObject, targetArray);
+            int[] indexes = resolveIndex(sourceObject, newArray);
 
             String op = sourceObject.has("_op")
                     ? sourceObject.get("_op").getAsString()
@@ -336,9 +336,6 @@ public class JSONUtil {
         if (indexElement != null && indexElement.isJsonPrimitive()) {
             return indexElement.getAsInt();
         }
-
-        HytalorPlugin.get().getLogger().at(Level.WARNING)
-                .log("Upsert operation requires a single integer _index value. Defaulting to -1 (append to end).");
 
         return -1; //Default to -1 (no index specified)
     }

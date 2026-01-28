@@ -1,6 +1,11 @@
 {
   "Categories": [
     {
+      "Id": "Arcane_Staves",
+      "Icon": "Icons/CraftingCategories/Arcane/Staff.png",
+      "Name": "server.benchCategories.implements"
+    },
+    {
       "Id": "Arcane_Portals",
       "Icon": "Icons/CraftingCategories/Arcane/Portal_Device.png",
       "Name": "server.benchCategories.portals"
@@ -34,11 +39,6 @@
       "Id": "Arcane_Pants",
       "Icon": "Icons/CraftingCategories/Arcane/Legs.png",
       "Name": "server.benchCategories.legs"
-    },
-    {
-      "Id": "Arcane_Staves",
-      "Icon": "Icons/CraftingCategories/Arcane/Staff.png",
-      "Name": "server.benchCategories.implements"
     }
   ]
 }
