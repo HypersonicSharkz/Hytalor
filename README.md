@@ -5,6 +5,19 @@ Hytalor is a light-weight asset patching framework designed to reduce mod confli
 
 Instead of overwriting entire JSON files, Hytalor allows smaller patches which are merged together into a final asset at runtime. 
 
+## How This Works
+Hytalor works by leveraging Hytale’s normal asset loading order, where later-loaded assets override earlier ones.
+
+It creates a new AssetPack that loads after the base game and all other plugins. 
+Instead of replacing assets directly, Hytalor:
+- Collects all patches targeting a base asset
+- Merges those patches into a single, fully combined asset
+- Writes the merged result into the Hytalor AssetPack using the same asset path as the original
+
+When Hytale loads assets, it detects this AssetPack last, causing the patched versions to override the originals automatically.
+
+Whenever a patch changes, Hytalor rebuilds the combined asset. Hytale then detects the updated asset and reloads it using its normal asset refresh system.
+
 ## ✨ Key Features
 - **Conflict-Mitigation**\
   Multiple mods can modify the same asset without ovewriting each other.
