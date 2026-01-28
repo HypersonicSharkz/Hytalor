@@ -1,3 +1,5 @@
+import app.ultradev.hytalegradle.manifest.ManifestExtension
+
 plugins {
     id("java")
     id("com.gradleup.shadow") version "9.3.1"
@@ -5,7 +7,7 @@ plugins {
 }
 
 group = "com.hypersonicsharkz"
-version = "1.4"
+version = "1.5"
 
 repositories {
     mavenCentral()
@@ -34,11 +36,15 @@ hytale {
     // Load mods from the local Hytale installation
     includeLocalMods.set(false)
 
-    serverJar.set(file("D:\\hytale-downloader\\2026.01.24-6e2d4fc36\\Server\\HytaleServer.jar"))
-    assetsZip.set(file("D:\\hytale-downloader\\2026.01.24-6e2d4fc36\\Assets.zip"))
+    serverJar.set(file("D:\\hytale-downloader\\2026.01.28-87d03be09\\Server\\HytaleServer.jar"))
+    assetsZip.set(file("D:\\hytale-downloader\\2026.01.28-87d03be09\\Assets.zip"))
 
     // Replace the version in the manifest with the project version
     manifest {
         version.set(project.version.toString())
+        authors.set(listOf(
+            ManifestExtension.AuthorInfo("HypersonicSharkz", null, "https://www.curseforge.com/members/hypersonicsharkz")
+        ))
+        website.set("https://github.com/HypersonicSharkz/Hytalor")
     }
 }

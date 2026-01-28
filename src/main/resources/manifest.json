@@ -4,9 +4,12 @@
     "Version": "1.4",
     "Description": "Modify assets without conflicting with other mods.",
     "Authors": [
-        
+        {
+            "Name": "HypersonicSharkz",
+            "Website": "https://www.curseforge.com/members/hypersonicsharkz"
+        }
     ],
-    "Website": "",
+    "Website": "https://github.com/HypersonicSharkz/Hytalor",
     "Main": "com.hypersonicsharkz.HytalorPlugin",
     "Dependencies": {
         
