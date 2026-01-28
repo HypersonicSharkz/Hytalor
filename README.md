@@ -59,6 +59,8 @@ Only overrides the `Stars` texture in the Zone1_Sunny asset.
 
 Overrides the `Stars` texture of every asset insde the Weathers/Zone1 directory
 
+<br />
+
 ## 🔧 Array Patching
 Hytalor recursivly merges JSON assets. Objects are merged by key, while arrays are modified using special control fields.
 
@@ -77,6 +79,7 @@ Hytalor recursivly merges JSON assets. Objects are merged by key, while arrays a
 | `add`               | Insert a new element (or append to end if no index / find) |
 | `addBefore` | Inserts element before `_index` or matched elements (or adds to front if no index / find) |
 | `addAfter` | Inserts element after `_index` or matched elements (or append to end if no index / find) |
+| `upsert`   | If element is found `_find` merge into it, otherwise add new element at `_index` (or at end if not specified) |
 | `remove`            | Remove the element               |
 
 > [!IMPORTANT]  
@@ -84,8 +87,13 @@ Hytalor recursivly merges JSON assets. Objects are merged by key, while arrays a
 > It is therefore advised to use `_find` queries instead if order is very important.
 
 ### Example: Merge
+<details>
+  <summary>Expand</summary>
+
+  
 When merging, only the provided fields are updated, and all other fields remain untouched.
 The object is not replace, just partially modified.
+
 
 📄 Base Asset (Before)
 ```json
@@ -127,8 +135,58 @@ The object is not replace, just partially modified.
 }
 ```
 
-### Patching Primitive Arrays
-Primitve arrays are a bit different to Patch, due to it expecting primitive values and not objects.
+</details>
+
+---
+
+### Example: Add
+<details>
+  <summary>Expand</summary>
+
+
+```json
+{
+  "BaseAssetPath": "NPC/Roles/_Core/Templates/Template_Animal_Neutral",
+  "Instructions": [
+    {
+      "_index": 0,
+      "_op": "add",
+      "Continue": true,
+      "Sensor": {
+        "Type": "Any"
+      },
+      "Actions": [
+        {
+          "Type": "SpawnParticles",
+          "Offset": [
+            0,
+            1,
+            0
+          ],
+          "ParticleSystem": "Hearts"
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### What this does
+- Applies to the `Template_Animal_Neutral` asset.
+- Adds new object to `Instructions`, at begging of original array.
+
+Using `addBefore` and removing the `_index` results in the same.
+
+</details>
+
+---
+
+### Example: Upsert
+<details>
+  <summary>Expand</summary>
+  
+Upsert merges into the element queried for in `_find` if it exists. Otherwise adds a new element into the array at the specified `_index` or at end if not set.
+
 
 📄 Base Asset (Before)
 ```json
@@ -136,9 +194,77 @@ Primitve arrays are a bit different to Patch, due to it expecting primitive valu
   //...
   "Categories": [
     {
-      "_op": "add",
-      "_value": "Furniture.Benches"
+      "Id": "Arcane_Spellbooks",
+      "Icon": "Icons/CraftingCategories/Arcane/Spellbook.png",
+      "Name": "server.benchCategories.spellbooks"
     }
+  ]
+  //...
+}
+```
+
+🧩 Hytalor Patch
+```json
+"Categories": [
+  {
+    "_index": 0,
+    "_op": "upsert",
+    "_find": {
+      "Id": "Arcane_Spellbooks"
+    }
+    "Id": "Arcane_Spellbooks",
+    "Icon": "Custom.Icon",
+    "Name": "Custom.Name"
+  },
+  {
+    "_index": 0,
+    "_op": "upsert",
+    "_find": {
+      "Id": "Arcane_Staves"
+    }
+    "Id": "Arcane_Staves",
+    "Icon": "Custom.Icon",
+    "Name": "Custom.Name"
+  }
+]
+```
+
+✅ Resulting Asset
+```json
+{
+  //...
+  "Categories": [
+    {
+      "Id": "Arcane_Staves",
+      "Icon": "Custom.Icon",
+      "Name": "Custom.Name"
+    },
+    {
+      "Id": "Arcane_Spellbooks",
+      "Icon": "Custom.Icon",
+      "Name": "Custom.Name"
+    }
+  ]
+  //...
+}
+```
+</details>
+
+---
+
+### Patching Primitive Arrays
+<details>
+  <summary>Expand</summary>
+  
+Primitve arrays are a bit different to Patch, due to it expecting primitive values and not objects.
+
+
+📄 Base Asset (Before)
+```json
+{
+  //...
+  "Categories": [
+    "Furniture.Benches"
   ],
   "Tags": {
     "Type": [
@@ -150,6 +276,7 @@ Primitve arrays are a bit different to Patch, due to it expecting primitive valu
 ```
 
 🧩 Hytalor Patch
+
 Adding to the end of the array is simple:
 ```json
 {
@@ -189,50 +316,22 @@ Overwriting the array can be done using the Query system:
   //...
 }
 ```
+</details>
 
-
-
-
-
-### Example: Add
-```json
-{
-  "BaseAssetPath": "NPC/Roles/_Core/Templates/Template_Animal_Neutral",
-  "Instructions": [
-    {
-      "_index": 0,
-      "_op": "add",
-      "Continue": true,
-      "Sensor": {
-        "Type": "Any"
-      },
-      "Actions": [
-        {
-          "Type": "SpawnParticles",
-          "Offset": [
-            0,
-            1,
-            0
-          ],
-          "ParticleSystem": "Hearts"
-        }
-      ]
-    }
-  ]
-}
-```
-#### What this does
-- Applies to the `Template_Animal_Neutral` asset.
-- Adds new object to `Instructions`, at begging of original array.
-
-Using `addBefore` and removing the `_index` results in the same.
-  
 ---
+<br />
+
 
 ## `_find` and `_findAll` Query examples.
 Hytalor uses **JsonPath** queries to search inside arrays. More info here: (https://github.com/json-path/JsonPath)
 
+### Example: Merge Query
+<details>
+  <summary>Expand</summary>
+
 For merge operations, direct JsonPath assignment can be used:
+
+
 ```json
 {
   "BaseAssetPath": "Weathers/Zone1/*",
@@ -265,56 +364,73 @@ The exact same can be achieved using structed JSON as well:
 - Then every color with an Hour value below 12
 - Sets the color value
 
+</details>
+
 ---
 
-### Example: Removing
-```json
-{
-  "BaseAssetPath": "Weathers/Zone1/*",
-  "Clouds": [
-    {
-      "_findAll": "$[*]",
-      "Colors": [
-        {
-          "_findAll": "$[?(@.Hour < 12)]",
-          "_op": "remove"
-        }
-      ]
-    }
-  ]
-}
-```
-#### What this does
-- Applies to every weather asset in `Weathers/Zone1/`.
-- Selects every cloud
-- Removes every color element with an Hour value below 12
+### Example: Remove Query
+<details>
+  <summary>Expand</summary>
+
+
+  ```json
+  {
+    "BaseAssetPath": "Weathers/Zone1/*",
+    "Clouds": [
+      {
+        "_findAll": "$[*]",
+        "Colors": [
+          {
+            "_findAll": "$[?(@.Hour < 12)]",
+            "_op": "remove"
+          }
+        ]
+      }
+    ]
+  }
+  ```
+
+  #### What this does
+  - Applies to every weather asset in `Weathers/Zone1/`.
+  - Selects every cloud
+  - Removes every color element with an Hour value below 12
+    
+</details>
 
 ---
 
 ### Example: Adding
-```json
-{
-  "BaseAssetPath": "Weathers/Zone1/*",
-  "Clouds": [
-    {
-      "_findAll": "$[*]",
-      "Colors": [
-        {
-          "_find": "$[?(@.Hour > 14)]"
-          "_op": "add",
-          "Hour": 14,
-          "Color": "#00FF00"
-        }
-      ]
-    }
-  ]
-}
-```
-#### What this does
-- Applies to every weather asset in `Weathers/Zone1/`.
-- Selects every cloud
-- Finds first color with Hour > 14
-- Adds new object before the found element
+
+<details>
+  <summary>Expand</summary>
+
+
+  ```json
+  {
+    "BaseAssetPath": "Weathers/Zone1/*",
+    "Clouds": [
+      {
+        "_findAll": "$[*]",
+        "Colors": [
+          {
+            "_find": "$[?(@.Hour > 14)]"
+            "_op": "add",
+            "Hour": 14,
+            "Color": "#00FF00"
+          }
+        ]
+      }
+    ]
+  }
+  ```
+
+  #### What this does
+  - Applies to every weather asset in `Weathers/Zone1/`.
+  - Selects every cloud
+  - Finds first color with Hour > 14
+  - Adds new object before the found element
+
+</details>
 
 ---
 
