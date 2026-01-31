@@ -23,8 +23,6 @@ public class ReloadPatchesCommand extends AbstractAsyncCommand {
     protected CompletableFuture<Void> executeAsync(@Nonnull CommandContext commandContext) {
         commandContext.sendMessage(Message.raw("Unload existing Patches..."));
 
-        HytalorPlugin.get().clearOverrideDirectory(false);
-
         List<AssetPack> assetPacks = AssetModule.get().getAssetPacks();
 
         for (AssetPack assetPack : assetPacks) {
@@ -48,9 +46,11 @@ public class ReloadPatchesCommand extends AbstractAsyncCommand {
 
         commandContext.sendMessage(Message.raw("Applying Patches..."));
 
+        HytalorPlugin.get().clearOverrideDirectory(false);
+
         PatchManager.get().applyAllPatches();
 
-        commandContext.sendMessage(Message.raw("Finished!"));
+        commandContext.sendMessage(Message.raw("Finished, please wait for Hytale to reload assets!"));
         return CompletableFuture.completedFuture(null);
     }
 }
