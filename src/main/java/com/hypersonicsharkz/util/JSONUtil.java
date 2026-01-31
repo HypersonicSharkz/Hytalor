@@ -15,6 +15,7 @@ import com.jayway.jsonpath.spi.json.GsonJsonProvider;
 import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.logging.Level;
 
 public class JSONUtil {
@@ -53,6 +54,9 @@ public class JSONUtil {
             }
 
             if (!target.has(key)) {
+                if (isPatch(sourceValue))
+                    continue;
+
                 addNewField(target, key, sourceValue);
                 continue;
             }
@@ -61,6 +65,11 @@ public class JSONUtil {
 
             // existing value for "key" - recursively deep merge:
             if (sourceValue.isJsonObject() && targetValue.isJsonObject()) {
+                if (isRemoveOperation(sourceValue.getAsJsonObject())) {
+                    target.remove(key);
+                    return;
+                }
+
                 deepMerge(sourceValue.getAsJsonObject(), targetValue.getAsJsonObject());
             } else if (sourceValue.isJsonArray() && targetValue.isJsonArray()) {
                 target.add(key, mergeArray(sourceValue.getAsJsonArray(), targetValue.getAsJsonArray()));
@@ -68,6 +77,20 @@ public class JSONUtil {
                 target.add(key, sourceValue);
             }
         }
+    }
+
+    private static boolean isRemoveOperation(JsonObject patch) {
+        JsonElement op = patch.get("_op");
+        if (op != null && op.isJsonPrimitive() && op.getAsJsonPrimitive().isString()) {
+            String opString = op.getAsString();
+            if (opString.equals("remove")) {
+                return true;
+            } else {
+                HytalorPlugin.get().getLogger().at(Level.WARNING)
+                        .log("Operation " + opString + " is not valid for a Json Object patch");
+            }
+        }
+        return false;
     }
 
     private static void addNewField(JsonObject target, String key, JsonElement value) {
@@ -293,6 +316,11 @@ public class JSONUtil {
                 String jsonPath = match.getAsString();
 
                 if (value.isJsonObject()) {
+                    if (isRemoveOperation(value.getAsJsonObject())) {
+                        objectDoc.delete(jsonPath);
+                        return;
+                    }
+
                     JsonObject matchObject = objectDoc.read(jsonPath);
                     deepMerge(value.getAsJsonObject(), matchObject);
                     objectDoc.set(jsonPath, matchObject);
@@ -316,7 +344,7 @@ public class JSONUtil {
     }
 
     private static boolean isQuery(String key) {
-        return key.startsWith("$");
+        return key.startsWith("$") && !key.equals("$Comment");
     }
 
     private static int[] queryIndexes(JsonElement findElement, JsonArray targetArray, boolean firstOnly) {
@@ -377,9 +405,33 @@ public class JSONUtil {
         if (!firstElement.isJsonObject())
             return false;
 
-        return firstElement.getAsJsonObject().has("_op") ||
-               firstElement.getAsJsonObject().has("_index") ||
-               firstElement.getAsJsonObject().has("_find") ||
-               firstElement.getAsJsonObject().has("_findAll");
+        return isObjectAPatch(firstElement.getAsJsonObject());
+    }
+
+    private static boolean isObjectAPatch(JsonObject jsonObject) {
+        return jsonObject.getAsJsonObject().has("_op") ||
+                jsonObject.getAsJsonObject().has("_index") ||
+                jsonObject.getAsJsonObject().has("_find") ||
+                jsonObject.getAsJsonObject().has("_findAll");
+    }
+
+    private static boolean isPatch(JsonElement jsonElement) {
+        if (!jsonElement.isJsonObject())
+            return false;
+
+        JsonObject jsonObject = jsonElement.getAsJsonObject();
+
+        if (isObjectAPatch(jsonObject))
+            return true;
+
+        for (Map.Entry<String, JsonElement> element : jsonObject.entrySet()) {
+            if (element.getValue().isJsonObject())
+                return isObjectAPatch(element.getValue().getAsJsonObject());
+
+            if (element.getValue().isJsonArray())
+                return isArrayPatch(element.getValue().getAsJsonArray());
+        }
+
+        return false;
     }
 }
