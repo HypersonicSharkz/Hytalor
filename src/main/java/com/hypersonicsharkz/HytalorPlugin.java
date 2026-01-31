@@ -1,5 +1,6 @@
 package com.hypersonicsharkz;
 
+import com.hypersonicsharkz.commands.HytalorCommandCollection;
 import com.hypixel.hytale.assetstore.AssetPack;
 import com.hypixel.hytale.common.plugin.PluginManifest;
 import com.hypixel.hytale.common.semver.Semver;
@@ -32,8 +33,6 @@ public class HytalorPlugin extends JavaPlugin {
     public static String PATCHES_ASSET_PATH = "Server/Patch";
     public static Path OVERRIDES_TEMP_PATH = PluginManager.MODS_PATH.resolve("HytalorOverrides");
 
-    private final PatchManager patchManager = new PatchManager();
-
     private static HytalorPlugin instance;
 
     public static HytalorPlugin get() {
@@ -64,13 +63,15 @@ public class HytalorPlugin extends JavaPlugin {
 
         super.setup();
 
+        this.getCommandRegistry().registerCommand(new HytalorCommandCollection());
+
         this.getEventRegistry().register((short)128, LoadAssetEvent.class, (event) -> {
             this.getLogger().at(Level.INFO).log("Loading Hytalor Patch assets phase...");
             long start = System.nanoTime();
             List<AssetPack> assetPacks = AssetModule.get().getAssetPacks();
 
             for (AssetPack assetPack : assetPacks) {
-                patchManager.loadPatchAssets(assetPack);
+                PatchManager.get().loadPatchAssets(assetPack);
             }
 
             this.getLogger()
@@ -86,12 +87,12 @@ public class HytalorPlugin extends JavaPlugin {
             if (event.getAssetPack().getName().equals("com.hypersonicsharkz:Hytalor-Overrides")) {
                 return;
             }
-            patchManager.loadPatchAssets(event.getAssetPack());
+            PatchManager.get().loadPatchAssets(event.getAssetPack());
         });
 
         getEventRegistry().register(AssetPackUnregisterEvent.class, event -> {
-            patchManager.unloadPatchAssets(event.getAssetPack());
-            patchManager.applyAllPatches();
+            PatchManager.get().unloadPatchAssets(event.getAssetPack());
+            PatchManager.get().applyAllPatches();
         });
 
         getEventRegistry().register(BootEvent.class, _ -> initializePatches());
@@ -104,16 +105,16 @@ public class HytalorPlugin extends JavaPlugin {
         clearOverrideDirectory(true);
     }
 
-    protected void initializePatches() {
+    public void initializePatches() {
         clearOverrideDirectory(false);
         initializeOverrideDirectory();
 
-        patchManager.applyAllPatches();
+        PatchManager.get().applyAllPatches();
 
         registerAssetPack();
     }
 
-    private void initializeOverrideDirectory() {
+    public void initializeOverrideDirectory() {
         try {
             Path filePath = OVERRIDES_TEMP_PATH;
 
@@ -149,7 +150,7 @@ public class HytalorPlugin extends JavaPlugin {
         }
     }
 
-    private void clearOverrideDirectory(boolean includingDirectories) {
+    public void clearOverrideDirectory(boolean includingDirectories) {
         if (!Files.isDirectory(OVERRIDES_TEMP_PATH)) {
             return;
         }
@@ -176,7 +177,7 @@ public class HytalorPlugin extends JavaPlugin {
         }
     }
 
-    private void registerAssetPack() {
+    public void registerAssetPack() {
         Path filePath = OVERRIDES_TEMP_PATH;
 
         PluginManifest manifest = new PluginManifest(

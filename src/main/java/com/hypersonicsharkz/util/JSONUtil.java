@@ -6,7 +6,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.hypersonicsharkz.HytalorPlugin;
+import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.PathNotFoundException;
 import com.jayway.jsonpath.spi.json.GsonJsonProvider;
 
@@ -17,6 +19,11 @@ import java.util.logging.Level;
 
 public class JSONUtil {
     private static final GsonJsonProvider provider = new GsonJsonProvider();
+    private static final Configuration conf = Configuration
+            .builder()
+            .options(Option.ALWAYS_RETURN_LIST, Option.AS_PATH_LIST)
+            .jsonProvider(provider)
+            .build();
 
     public static JsonObject readJSON(Path path) {
         try (
@@ -35,7 +42,7 @@ public class JSONUtil {
 
     public static void deepMerge(JsonObject source, JsonObject target) {
         for (String key: source.keySet()) {
-            if (key.equals("BaseAssetPath"))
+            if (key.equals("BaseAssetPath") || key.equals("_priority"))
                 continue;
 
             JsonElement sourceValue = source.get(key);
@@ -272,21 +279,39 @@ public class JSONUtil {
         return true;
     }
 
-    private static void resolveQuery(String query, JsonElement queryElement, JsonObject targetObject) {
-        String result;
+    private static void resolveQuery(String query, JsonElement value, JsonObject targetObject) {
         try {
-            result = JsonPath.using(provider).parse(targetObject.toString()).set(query, queryElement).jsonString();
+            var pathsDoc = JsonPath.using(conf).parse(targetObject);
+            var objectDoc = JsonPath.using(provider).parse(targetObject);
+
+            JsonArray matches = pathsDoc.read(query);
+            if (matches.isEmpty()) {
+                throw new PathNotFoundException();
+            }
+
+            for (JsonElement match : matches) {
+                String jsonPath = match.getAsString();
+
+                if (value.isJsonObject()) {
+                    JsonObject matchObject = objectDoc.read(jsonPath);
+                    deepMerge(value.getAsJsonObject(), matchObject);
+                    objectDoc.set(jsonPath, matchObject);
+                    return;
+                }
+
+                if (value.isJsonArray() && isArrayPatch(value.getAsJsonArray())) {
+                    JsonArray matchArray = objectDoc.read(jsonPath);
+                    matchArray = mergeArray(value.getAsJsonArray(), matchArray);
+                    objectDoc.set(jsonPath, matchArray);
+                    return;
+                }
+
+                objectDoc.set(query, value).jsonString();
+            }
         } catch (PathNotFoundException e) {
             HytalorPlugin.get().getLogger().at(Level.WARNING).log(
                     "Query did not match any elements: " + query
             );
-            return;
-        }
-
-        targetObject.keySet().clear();
-        JsonObject updatedObject = JsonParser.parseString(result).getAsJsonObject();
-        for (String key : updatedObject.keySet()) {
-            targetObject.add(key, updatedObject.get(key));
         }
     }
 
@@ -295,19 +320,23 @@ public class JSONUtil {
     }
 
     private static int[] queryIndexes(JsonElement findElement, JsonArray targetArray, boolean firstOnly) {
-        JsonArray queryResults = JsonPath.using(provider).parse(targetArray.toString()).read(findElement.getAsString());
-
         JsonArray indexesArray = new JsonArray();
 
         for (int i = 0; i < targetArray.size(); i++) {
             JsonElement candidateElement = targetArray.get(i);
-            for (JsonElement resultElement : queryResults) {
-                if (resultElement.equals(candidateElement)) {
-                    indexesArray.add(i);
-                    if (firstOnly) {
-                        return getIndexes(indexesArray);
-                    }
-                }
+
+            try {
+                JsonArray queryResults = JsonPath.using(provider).parse(candidateElement).read(findElement.getAsString());
+                if (queryResults == null || queryResults.isEmpty())
+                    continue;
+
+            } catch (PathNotFoundException e) {
+                continue;
+            }
+
+            indexesArray.add(i);
+            if (firstOnly) {
+                return getIndexes(indexesArray);
             }
         }
 

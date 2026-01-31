@@ -1,0 +1,310 @@
+{
+  "Parameters": {
+    "ChildKind": {
+      "Value": "Bunny",
+      "Description": "The child npc of this npc"
+    },
+    "ChildrenCount": {
+      "Value": [1, 1],
+      "Description": "The range of children the NPC can get when breeding"
+    },
+    "ChildScale": {
+      "Value": [ 0.4, 0.6 ],
+      "Description": "The scale range of the children"
+    }
+  },
+  "Instructions": [
+    {
+      "Instructions": [
+        {
+          "Sensor": {
+            "Type": "State",
+            "State": "Idle"
+          },
+          "Instructions": [
+            {
+              "Sensor": {
+                "Type": "State",
+                "State": ".FindFood"
+              },
+              "Instructions": [
+                {
+                  "Sensor": {
+                    "Type": "Or",
+                    "Sensors": [
+                      {
+                        "Type": "Block",
+                        "Range": 1.5,
+                        "MaxHeight": 4,
+                        "Blocks": {
+                          "Compute": "FoodBlockSet"
+                        },
+                        "Random": true
+                      },
+                      {
+                        "Enabled": {
+                          "Compute": "!isEmptyStringArray(FoodItemSet)"
+                        },
+                        "Type": "DroppedItem",
+                        "Range": 1,
+                        "Items": {
+                          "Compute": "FoodItemSet"
+                        },
+                        "ViewSector": {
+                          "Compute": "ViewSector"
+                        },
+                        "LineOfSight": true
+                      }
+                    ]
+                  },
+                  "BodyMotion": {
+                    "Type": "AimCharge"
+                  },
+                  "ActionsBlocking": true,
+                  "Actions": [
+                    {
+                      "Type": "PlayAnimation",
+                      "Slot": "Status",
+                      "Animation": "Eat"
+                    },
+                    {
+                      "Type": "Timeout",
+                      "Delay": [
+                        4,
+                        6
+                      ]
+                    },
+                    {
+                      "Type": "PickUpItem",
+                      "Items": [
+                        "*Hay*"
+                      ],
+                      "Range": 1.5,
+                      "StorageTarget": "Destroy"
+                    },
+                    {
+                      "Type": "State",
+                      "State": ".Breed"
+                    }
+                  ]
+                },
+                {
+                  "Sensor": {
+                    "Type": "Or",
+                    "Sensors": [
+                      {
+                        "Type": "Block",
+                        "Range": {
+                          "Compute": "ViewRange"
+                        },
+                        "MaxHeight": 4,
+                        "Blocks": {
+                          "Compute": "FoodBlockSet"
+                        },
+                        "Random": true
+                      },
+                      {
+                        "Enabled": {
+                          "Compute": "!isEmptyStringArray(FoodItemSet)"
+                        },
+                        "Type": "DroppedItem",
+                        "Range": {
+                          "Compute": "ViewRange"
+                        },
+                        "Items": {
+                          "Compute": "FoodItemSet"
+                        },
+                        "ViewSector": {
+                          "Compute": "ViewSector"
+                        },
+                        "LineOfSight": true
+                      }
+                    ]
+                  },
+                  "BodyMotion": {
+                    "Type": "Seek",
+                    "RelativeSpeed": 0.6,
+                    "StopDistance": 0.5,
+                    "RelaxedMoveConstraints": false
+                  },
+                  "HeadMotion": {
+                    "Type": "Watch"
+                  }
+                },
+                {
+                  "Sensor": {
+                    "Type": "Any"
+                  },
+                  "ActionsBlocking": true,
+                  "Actions": [
+                    {
+                      "Type": "PlayAnimation",
+                      "Slot": "Status"
+                    },
+                    {
+                      "Type": "Timeout",
+                      "Delay": [
+                        2,
+                        4
+                      ]
+                    },
+                    {
+                      "Type": "ResetBlockSensors"
+                    },
+                    {
+                      "Type": "State",
+                      "State": ".Default"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "Sensor": {
+                "Type": "State",
+                "State": ".Breed"
+              },
+              "Instructions": [
+                {
+                  "$Comment": "Check if mob of same kind is nearby, then breed",
+                  "Sensor": {
+                    "Type": "Mob",
+                    "Range": 2,
+                    "ExcludeOwnType": false,
+                    "LockOnTarget": true,
+                    "Filters": [
+                      {
+                        "Type": "NPCGroup",
+                        "IncludeGroups": [
+                          "Self"
+                        ]
+                      },
+                      {
+                        "Type": "FilterState",
+                        "State": "Idle.Breed"
+                      },
+                      {
+                        "Type": "HigherID"
+                      }
+                    ]
+                  },
+                  "ActionsBlocking": true,
+                  "Actions": [
+                    {
+                      "Type": "SpawnParticles",
+                      "Offset": [
+                        0,
+                        1,
+                        0
+                      ],
+                      "ParticleSystem": "Hearts"
+                    },
+                    {
+                      "Type": "SpawnChild",
+                      "Scale": {
+                        "Compute": "ChildScale"
+                      },
+                      "FanOut": true,
+                      "SpawnDirection": 0,
+                      "SpawnAngle": 180,
+                      "DistanceRange": [
+                        1,
+                        1
+                      ],
+                      "CountRange": {
+                        "Compute": "ChildrenCount"
+                      },
+                      "DelayRange": [
+                        0,
+                        0
+                      ],
+                      "Kind": {
+                        "Compute": "ChildKind"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "$Comment": "Find nearby npc of same type, and seek to it",
+                  "Sensor": {
+                    "Type": "Mob",
+                    "Range": 20,
+                    "ExcludeOwnType": false,
+                    "LockOnTarget": true,
+                    "Filters": [
+                      {
+                        "Type": "NPCGroup",
+                        "IncludeGroups": [
+                          "Self"
+                        ]
+                      },
+                      {
+                        "Type": "FilterState",
+                        "State": "Idle.Breed"
+                      }
+                    ]
+                  },
+                  "BodyMotion": {
+                    "Type": "Seek",
+                    "RelativeSpeed": 0.6,
+                    "StopDistance": 1.0,
+                    "RelaxedMoveConstraints": false
+                  },
+                  "HeadMotion": {
+                    "Type": "Watch"
+                  }
+                },
+                {
+                  "$Comment": "Nothing nearby, wander for some time, then turn back to default",
+                  "Sensor": {
+                    "Type": "Any"
+                  },
+                  "ActionsBlocking": true,
+                  "Actions": [
+                    {
+                      "Type": "Timeout",
+                      "Delay": [
+                        20,
+                        20
+                      ]
+                    },
+                    {
+                      "Type": "State",
+                      "State": ".Default"
+                    }
+                  ]
+                },
+                {
+                  "Actions": [
+                    {
+                      "Type": "Timeout",
+                      "Delay": [
+                        0.8,
+                        1.2
+                      ],
+                      "Action": {
+                        "Type": "SpawnParticles",
+                        "Offset": [
+                          0,
+                          1,
+                          0
+                        ]
+                      }
+                    }
+                  ],
+                  "BodyMotion": {
+                    "Type": "WanderInCircle",
+                    "Radius": 20,
+                    "MaxHeadingChange": 90,
+                    "RelativeSpeed": 1,
+                    "RelaxedMoveConstraints": true
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

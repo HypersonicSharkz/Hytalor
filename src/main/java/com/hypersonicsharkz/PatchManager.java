@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.hypersonicsharkz.builders.PatchBuilder;
 import com.hypersonicsharkz.util.JSONUtil;
 import com.hypersonicsharkz.util.QueryUtil;
 import com.hypixel.hytale.assetstore.AssetPack;
@@ -22,19 +23,34 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 public class PatchManager {
+    private static PatchManager instance;
+
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     private final Map<String, List<Path>> patchesMap = new HashMap<>(); //Cache for base -> patches
     private final Map<Path, List<String>> cachedPatchtoBaseMap = new HashMap<>(); //Cache for patchPath -> baseName
     private final Map<String, Path> cachedBasePathMap = new HashMap<>(); //Cache for baseName -> basePath
+
+    public static PatchManager get() {
+        if (instance == null) {
+            instance = new PatchManager();
+        }
+
+        return instance;
+    }
+
+    private PatchManager() {}
+
+    public void clear() {
+        patchesMap.clear();
+        cachedPatchtoBaseMap.clear();
+        cachedBasePathMap.clear();
+    }
 
     public void addPatchAsset(String basePath, Path patchPath) {
         if (patchesMap.containsKey(basePath)) {
@@ -224,6 +240,8 @@ public class PatchManager {
                 "Found " + patches.size() + " patches for base asset path: " + baseName + ". Applying patches..."
         );
 
+        List<PatchObject> patchesJSON = new ArrayList<>();
+
         for (Path patch : patches) {
             JsonObject patchData = JSONUtil.readJSON(patch);
             if (patchData == null) {
@@ -233,10 +251,21 @@ public class PatchManager {
                 continue;
             }
 
-            JSONUtil.deepMerge(patchData, combined);
+            patchesJSON.add(new PatchObject(patchData, patch));
+        }
+
+        patchesJSON.sort((a, b) -> {
+            int weightA = a.patch.has("_priority") ? a.patch.get("_priority").getAsInt() : 0;
+            int weightB = b.patch.has("_priority") ? b.patch.get("_priority").getAsInt() : 0;
+
+            return Integer.compare(weightB, weightA);
+        });
+
+        for (PatchObject patchData : patchesJSON) {
+            JSONUtil.deepMerge(patchData.patch, combined);
 
             HytalorPlugin.get().getLogger().at(Level.INFO).log(
-                    "Applied patch: " + patch
+                    "Applied patch: " + patchData.path
             );
         }
 
@@ -311,4 +340,6 @@ public class PatchManager {
             }
         }
     }
+
+    private record PatchObject(JsonObject patch, Path path) {}
 }

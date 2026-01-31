@@ -1,0 +1,149 @@
+{
+  "Instructions": [
+    {
+      "Instructions": [
+        {
+          "Sensor": {
+            "Type": "State",
+            "State": "Idle"
+          },
+          "Instructions": [
+            {
+              "Sensor": {
+                "Type": "State",
+                "State": ".FindFood"
+              },
+              "Instructions": [
+                {
+                  "Sensor": {
+                    "Type": "Or",
+                    "Sensors": [
+                      {
+                        "Type": "Block",
+                        "Range": 1.5,
+                        "MaxHeight": 4,
+                        "Blocks": {
+                          "Compute": "FoodBlockSet"
+                        },
+                        "Random": true
+                      },
+                      {
+                        "Enabled": {
+                          "Compute": "!isEmptyStringArray(FoodItemSet)"
+                        },
+                        "Type": "DroppedItem",
+                        "Range": 1,
+                        "Items": {
+                          "Compute": "FoodItemSet"
+                        },
+                        "ViewSector": {
+                          "Compute": "ViewSector"
+                        },
+                        "LineOfSight": true
+                      }
+                    ]
+                  },
+                  "BodyMotion": {
+                    "Type": "AimCharge"
+                  },
+                  "ActionsBlocking": true,
+                  "Actions": [
+                    {
+                      "Type": "PlayAnimation",
+                      "Slot": "Status",
+                      "Animation": "Eat"
+                    },
+                    {
+                      "Type": "Timeout",
+                      "Delay": [
+                        4,
+                        6
+                      ]
+                    },
+                    {
+                      "Type": "PickUpItem",
+                      "Items": [
+                        "*Hay*"
+                      ],
+                      "Range": 1.5,
+                      "StorageTarget": "Destroy"
+                    }
+                  ]
+                },
+                {
+                  "Sensor": {
+                    "Type": "Or",
+                    "Sensors": [
+                      {
+                        "Type": "Block",
+                        "Range": {
+                          "Compute": "ViewRange"
+                        },
+                        "MaxHeight": 4,
+                        "Blocks": {
+                          "Compute": "FoodBlockSet"
+                        },
+                        "Random": true
+                      },
+                      {
+                        "Enabled": {
+                          "Compute": "!isEmptyStringArray(FoodItemSet)"
+                        },
+                        "Type": "DroppedItem",
+                        "Range": {
+                          "Compute": "ViewRange"
+                        },
+                        "Items": {
+                          "Compute": "FoodItemSet"
+                        },
+                        "ViewSector": {
+                          "Compute": "ViewSector"
+                        },
+                        "LineOfSight": true
+                      }
+                    ]
+                  },
+                  "BodyMotion": {
+                    "Type": "Seek",
+                    "RelativeSpeed": 0.6,
+                    "StopDistance": 0.5,
+                    "RelaxedMoveConstraints": false
+                  },
+                  "HeadMotion": {
+                    "Type": "Watch"
+                  }
+                },
+                {
+                  "Sensor": {
+                    "Type": "Any"
+                  },
+                  "ActionsBlocking": true,
+                  "Actions": [
+                    {
+                      "Type": "PlayAnimation",
+                      "Slot": "Status"
+                    },
+                    {
+                      "Type": "Timeout",
+                      "Delay": [
+                        2,
+                        4
+                      ]
+                    },
+                    {
+                      "Type": "ResetBlockSensors"
+                    },
+                    {
+                      "Type": "State",
+                      "State": ".Default"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

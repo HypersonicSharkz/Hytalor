@@ -19,7 +19,7 @@
       "Property2": "Value2",
       "NestedArray": [
         {
-          "SubProperty4": "SubValue4"
+          "SubProperty4": "NewValue"
         }
       ]
     }

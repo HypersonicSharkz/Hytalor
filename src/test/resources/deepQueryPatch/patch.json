@@ -1,0 +1,175 @@
+{
+  "Parameters": {
+    "ChildKind": {
+      "Value": "Bunny",
+      "Description": "The child npc of this npc"
+    },
+    "ChildrenCount": {
+      "Value": [1, 1],
+      "Description": "The range of children the NPC can get when breeding"
+    },
+    "ChildScale": {
+      "Value": [ 0.4, 0.6 ],
+      "Description": "The scale range of the children"
+    }
+  },
+  "$..Instructions[?(@.Sensor.State == '.FindFood')].Instructions": [
+    {
+      "_find": "$.Actions[?(@.Type == 'PickUpItem')]",
+      "Actions": [
+        {
+          "_op": "addAfter",
+          "Type": "State",
+          "State": ".Breed"
+        }
+      ]
+    }
+  ],
+  "$..Instructions[?(@.Sensor.State == 'Idle')].Instructions": [
+    {
+      "_find": "$[?(@.Sensor.State == '.FindFood')]",
+      "_op": "addAfter",
+      "Sensor": {
+        "Type": "State",
+        "State": ".Breed"
+      },
+      "Instructions": [
+        {
+          "$Comment": "Check if mob of same kind is nearby, then breed",
+          "Sensor": {
+            "Type": "Mob",
+            "Range": 2,
+            "ExcludeOwnType": false,
+            "LockOnTarget": true,
+            "Filters": [
+              {
+                "Type": "NPCGroup",
+                "IncludeGroups": [
+                  "Self"
+                ]
+              },
+              {
+                "Type": "FilterState",
+                "State": "Idle.Breed"
+              },
+              {
+                "Type": "HigherID"
+              }
+            ]
+          },
+          "ActionsBlocking": true,
+          "Actions": [
+            {
+              "Type": "SpawnParticles",
+              "Offset": [
+                0,
+                1,
+                0
+              ],
+              "ParticleSystem": "Hearts"
+            },
+            {
+              "Type": "SpawnChild",
+              "Scale": {
+                "Compute": "ChildScale"
+              },
+              "FanOut": true,
+              "SpawnDirection": 0,
+              "SpawnAngle": 180,
+              "DistanceRange": [
+                1,
+                1
+              ],
+              "CountRange": {
+                "Compute": "ChildrenCount"
+              },
+              "DelayRange": [
+                0,
+                0
+              ],
+              "Kind": {
+                "Compute": "ChildKind"
+              }
+            }
+          ]
+        },
+        {
+          "$Comment": "Find nearby npc of same type, and seek to it",
+          "Sensor": {
+            "Type": "Mob",
+            "Range": 20,
+            "ExcludeOwnType": false,
+            "LockOnTarget": true,
+            "Filters": [
+              {
+                "Type": "NPCGroup",
+                "IncludeGroups": [
+                  "Self"
+                ]
+              },
+              {
+                "Type": "FilterState",
+                "State": "Idle.Breed"
+              }
+            ]
+          },
+          "BodyMotion": {
+            "Type": "Seek",
+            "RelativeSpeed": 0.6,
+            "StopDistance": 1.0,
+            "RelaxedMoveConstraints": false
+          },
+          "HeadMotion": {
+            "Type": "Watch"
+          }
+        },
+        {
+          "$Comment": "Nothing nearby, wander for some time, then turn back to default",
+          "Sensor": {
+            "Type": "Any"
+          },
+          "ActionsBlocking": true,
+          "Actions": [
+            {
+              "Type": "Timeout",
+              "Delay": [
+                20,
+                20
+              ]
+            },
+            {
+              "Type": "State",
+              "State": ".Default"
+            }
+          ]
+        },
+        {
+          "Actions": [
+            {
+              "Type": "Timeout",
+              "Delay": [
+                0.8,
+                1.2
+              ],
+              "Action": {
+                "Type": "SpawnParticles",
+                "Offset": [
+                  0,
+                  1,
+                  0
+                ]
+              }
+            }
+          ],
+          "BodyMotion": {
+            "Type": "WanderInCircle",
+            "Radius": 20,
+            "MaxHeadingChange": 90,
+            "RelativeSpeed": 1,
+            "RelaxedMoveConstraints": true
+          }
+        }
+      ]
+    }
+  ]
+}
