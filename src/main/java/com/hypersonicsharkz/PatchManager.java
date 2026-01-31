@@ -5,9 +5,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.hypersonicsharkz.builders.PatchBuilder;
+import com.hypersonicsharkz.util.Color;
 import com.hypersonicsharkz.util.JSONUtil;
 import com.hypersonicsharkz.util.QueryUtil;
 import com.hypixel.hytale.assetstore.AssetPack;
+import com.hypixel.hytale.builtin.hytalegenerator.LoggerUtil;
 import com.hypixel.hytale.common.util.FormatUtil;
 import com.hypixel.hytale.logger.sentry.SkipSentryException;
 import com.hypixel.hytale.server.core.asset.AssetModule;
@@ -15,6 +17,8 @@ import com.hypixel.hytale.server.core.asset.monitor.AssetMonitor;
 import com.hypixel.hytale.server.core.asset.monitor.AssetMonitorHandler;
 import com.hypixel.hytale.server.core.asset.monitor.EventKind;
 import com.hypixel.hytale.server.core.util.io.FileUtil;
+import org.jline.jansi.Ansi;
+import org.jline.jansi.AnsiColors;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -28,7 +32,7 @@ import java.util.logging.Level;
 import java.util.regex.Pattern;
 
 public class PatchManager {
-    private static PatchManager instance;
+    private static final PatchManager instance = new PatchManager();
 
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -37,10 +41,6 @@ public class PatchManager {
     private final Map<String, Path> cachedBasePathMap = new HashMap<>(); //Cache for baseName -> basePath
 
     public static PatchManager get() {
-        if (instance == null) {
-            instance = new PatchManager();
-        }
-
         return instance;
     }
 
@@ -71,12 +71,19 @@ public class PatchManager {
         cachedPatchtoBaseMap.computeIfAbsent(patchPath, k -> new ArrayList<>()).add(basePath);
     }
 
-    private List<Map.Entry<String, Path>> getBaseAssets(String pattern) {
-        Pattern regex = QueryUtil.globToRegex(pattern);
+    private List<Map.Entry<String, Path>> getBaseAssets(String input) {
+        Pattern pattern;
+
+        if (input.startsWith("regex:")) {
+            String rawRegex = input.substring("regex:".length());
+            pattern = Pattern.compile(rawRegex);
+        } else {
+            pattern = QueryUtil.globToRegex(input);
+        }
 
         return cachedBasePathMap.entrySet()
                 .stream()
-                .filter(entry -> regex.matcher(entry.getKey()).matches())
+                .filter(entry -> pattern.matcher(entry.getKey()).matches())
                 .toList();
     }
 
@@ -155,10 +162,19 @@ public class PatchManager {
         if (basePathPattern == null)
             return;
 
-        List<Map.Entry<String, Path>> baseAssets = getBaseAssets(basePathPattern.getAsString());
+        Set<Map.Entry<String, Path>> baseAssets = new HashSet<>();
+        if (basePathPattern.isJsonArray()) {
+            for (JsonElement asset : basePathPattern.getAsJsonArray()) {
+                baseAssets.addAll(getBaseAssets(asset.getAsString()));
+            }
+        } else {
+            baseAssets.addAll(getBaseAssets(basePathPattern.getAsString()));
+        }
+
         if (baseAssets.isEmpty()) {
-            HytalorPlugin.get().getLogger().at(Level.WARNING).log(
-                    "No base assets found for patch using base path pattern: " + basePathPattern.getAsString()
+            HytalorPlugin.get().getLogger().at(Level.INFO).log(
+                    "%s⚠ No base assets found for patch using base path pattern: " + basePathPattern.getAsString(),
+                    Color.RED
             );
             return;
         }
@@ -219,34 +235,39 @@ public class PatchManager {
 
     public void applyPatches(String baseName, Path basePath) {
         long start = System.nanoTime();
+        var logger = HytalorPlugin.get().getLogger();
 
         JsonObject combined = JSONUtil.readJSON(basePath);
         if (combined == null) {
-            HytalorPlugin.get().getLogger().at(Level.WARNING).log(
-                    "Base asset not found for path: " + baseName
+            HytalorPlugin.get().getLogger().at(Level.INFO).log(
+                    "%s✖ Base asset not found for path: " + baseName,
+                    Color.RED
             );
             return;
         }
 
         List<Path> patches = patchesMap.get(baseName);
         if (patches == null) {
-            HytalorPlugin.get().getLogger().at(Level.INFO).log(
-                    "No patches found for base asset path: " + baseName
+            HytalorPlugin.get().getLogger().at(Level.WARNING).log(
+                    "• No patches found for base asset path: " + baseName
             );
             return;
         }
 
-        HytalorPlugin.get().getLogger().at(Level.INFO).log(
-                "Found " + patches.size() + " patches for base asset path: " + baseName + ". Applying patches..."
-        );
+        logger.at(Level.INFO).log("══════════════════════════════════════════════════════════════════════════");
+
+        logger.at(Level.INFO).log( "Found " + patches.size() + " patches for base asset path: " + baseName + ". Applying patches..." );
 
         List<PatchObject> patchesJSON = new ArrayList<>();
+        int failedLoads = 0;
 
         for (Path patch : patches) {
             JsonObject patchData = JSONUtil.readJSON(patch);
             if (patchData == null) {
-                HytalorPlugin.get().getLogger().at(Level.WARNING).log(
-                        "Failed to read patch file at path: " + patch
+                failedLoads++;
+                HytalorPlugin.get().getLogger().at(Level.INFO).log(
+                        "%s   ⚠ Failed to read patch: " + patch,
+                        Color.RED
                 );
                 continue;
             }
@@ -261,17 +282,26 @@ public class PatchManager {
             return Integer.compare(weightB, weightA);
         });
 
+        int applied = 0;
         for (PatchObject patchData : patchesJSON) {
+            logger.at(Level.INFO).log(
+                    "%s   ✔ Applying patch: " + patchData.path,
+                    Color.GREEN
+            );
+
             JSONUtil.deepMerge(patchData.patch, combined);
 
-            HytalorPlugin.get().getLogger().at(Level.INFO).log(
-                    "Applied patch: " + patchData.path
-            );
+            applied++;
         }
 
-        HytalorPlugin.get().getLogger().at(Level.INFO).log(
-                "Applied " + patches.size() + " patches for base asset path: " + baseName + ". Took %s",
-                FormatUtil.nanosToString(System.nanoTime() - start)
+        long duration = System.nanoTime() - start;
+
+        logger.at(Level.INFO).log(
+                "Patches Applied — base=%s | applied=" + Color.GREEN + "%d" + Color.RESET +" | failed="+ (failedLoads > 0 ? Color.RED : "") + "%d" + Color.RESET +" | time=%s",
+                baseName,
+                applied,
+                failedLoads,
+                FormatUtil.nanosToString(duration)
         );
 
         Path overridePath = HytalorPlugin.OVERRIDES_TEMP_PATH.resolve("Server/" + baseName + ".json");
@@ -283,6 +313,8 @@ public class PatchManager {
         for (String basePath : patchesMap.keySet()) {
             applyPatches(basePath);
         }
+
+        HytalorPlugin.get().getLogger().at(Level.INFO).log("══════════════════════════════════════════════════════════════════════════");
     }
 
     private void cacheAssetPaths(AssetPack pack) {

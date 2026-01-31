@@ -36,7 +36,7 @@ public class JSONUtil {
         } catch (Exception e) {
             HytalorPlugin.get().getLogger()
                     .at(Level.WARNING)
-                    .log("Failed to read JSON file at path: " + path, e);
+                    .log("      Failed to read JSON file at path: " + path, e);
             return null;
         }
     }
@@ -54,8 +54,11 @@ public class JSONUtil {
             }
 
             if (!target.has(key)) {
-                if (isPatch(sourceValue))
+                if (isPatch(sourceValue)) {
+                    HytalorPlugin.get().getLogger().at(Level.WARNING)
+                            .log("      Target Asset does not contain key: '" + key + "', But it was expected by the Patch");
                     continue;
+                }
 
                 addNewField(target, key, sourceValue);
                 continue;
@@ -87,7 +90,7 @@ public class JSONUtil {
                 return true;
             } else {
                 HytalorPlugin.get().getLogger().at(Level.WARNING)
-                        .log("Operation " + opString + " is not valid for a Json Object patch");
+                        .log("      Operation " + opString + " is not valid for a Json Object patch");
             }
         }
         return false;
@@ -133,7 +136,7 @@ public class JSONUtil {
                         //Unknown operation
                         HytalorPlugin.get().getLogger()
                                 .at(Level.WARNING)
-                                .log("Unknown array merge operation: " + op);
+                                .log("      Unknown array merge operation: " + op);
                 }
             }
         }
@@ -241,7 +244,7 @@ public class JSONUtil {
         if (findFirst && findAll) {
             HytalorPlugin.get().getLogger()
                     .at(Level.WARNING)
-                    .log("Array merge object cannot have both _find and _findAll properties:\n" + sourceObject);
+                    .log("      Array merge object cannot have both _find and _findAll properties:\n" + sourceObject);
             return new int[]{-1};
         }
 
@@ -338,7 +341,7 @@ public class JSONUtil {
             }
         } catch (PathNotFoundException e) {
             HytalorPlugin.get().getLogger().at(Level.WARNING).log(
-                    "Query did not match any elements: " + query
+                    "       Query did not match any elements: " + query
             );
         }
     }
