@@ -321,15 +321,8 @@ public class PatchManager {
 
         int applied = 0;
         for (PatchObject patchData : patchesJSON) {
-            FileSystem fs = patchData.path.getFileSystem();
-            String zipFilePath = Paths.get(fs.toString()).toString();
-
-            boolean zip = zipFilePath.endsWith(".jar") || zipFilePath.endsWith(".zip");
-
-            String fullPath = (zip ? (zipFilePath + "!") : "") + patchData.path;
-
             logger.at(Level.INFO).log(
-                    "%s   ✔ Applying patch: " + fullPath,
+                    "%s   ✔ Applying patch: " + QueryUtil.getFullPath(patchData.path),
                     Color.GREEN
             );
 
