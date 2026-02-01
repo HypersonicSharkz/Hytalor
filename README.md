@@ -144,7 +144,7 @@ The object is not replace, just partially modified.
 🧩 Hytalor Patch
 ```json
 {
-  "BaseAssetPath": "Weathers/Zone1/Zone1_Sunny",
+  "_BaseAssetPath": "Server/Weathers/Zone1/Zone1_Sunny.json",
   "Clouds": [
     {
       "_index": 0,
@@ -179,7 +179,7 @@ The object is not replace, just partially modified.
 
 ```json
 {
-  "BaseAssetPath": "NPC/Roles/_Core/Templates/Template_Animal_Neutral",
+  "_BaseAssetPath": "Server/NPC/Roles/_Core/Templates/Template_Animal_Neutral.json",
   "Instructions": [
     {
       "_index": 0,
@@ -313,7 +313,7 @@ Primitve arrays are a bit different to Patch, due to it expecting primitive valu
 Adding to the end of the array is simple:
 ```json
 {
-  "BaseAssetPath": "Item/Items/Bench/Bench_Arcane",
+  "_BaseAssetPath": "Server/Item/Items/Bench/Bench_Arcane.json",
   "Categories": [
     {
       "_op": "add",
@@ -326,7 +326,7 @@ Adding to the end of the array is simple:
 Overwriting the array can be done using the Query system:
 ```json
 {
-  "BaseAssetPath": "Item/Items/Bench/Bench_Arcane",
+  "_BaseAssetPath": "Server/Item/Items/Bench/Bench_Arcane",
   "$.Tags.Type": [
     "Custom.Type"
   ]
@@ -367,7 +367,7 @@ For merge operations, direct JsonPath assignment can be used:
 
 ```json
 {
-  "BaseAssetPath": "Weathers/Zone1/*",
+  "_BaseAssetPath": "Server/Weathers/Zone1/*",
   "$.Clouds[*].Colors[?(@.Hour < 12)].Color": "#00EE00"
 }
 ```
@@ -376,7 +376,7 @@ The exact same can be achieved using structed JSON as well:
 
 ```json
 {
-  "BaseAssetPath": "Weathers/Zone1/*",
+  "_BaseAssetPath": "Server/Weathers/Zone1/*",
   "Clouds": [
     {
       "_findAll": "$[*]",
@@ -392,7 +392,7 @@ The exact same can be achieved using structed JSON as well:
 ```
 
 #### What this does
-- Applies to every weather asset in `Weathers/Zone1/`.
+- Applies to every weather asset in `Server/Weathers/Zone1/`.
 - Selects every cloud
 - Then every color with an Hour value below 12
 - Sets the color value
@@ -408,7 +408,7 @@ The exact same can be achieved using structed JSON as well:
 
   ```json
   {
-    "BaseAssetPath": "Weathers/Zone1/*",
+    "_BaseAssetPath": "Server/Weathers/Zone1/*",
     "Clouds": [
       {
         "_findAll": "$[*]",
@@ -424,7 +424,7 @@ The exact same can be achieved using structed JSON as well:
   ```
 
   #### What this does
-  - Applies to every weather asset in `Weathers/Zone1/`.
+  - Applies to every weather asset in `Server/Weathers/Zone1/`.
   - Selects every cloud
   - Removes every color element with an Hour value below 12
     
@@ -440,7 +440,7 @@ The exact same can be achieved using structed JSON as well:
 
   ```json
   {
-    "BaseAssetPath": "Weathers/Zone1/*",
+    "_BaseAssetPath": "Server/Weathers/Zone1/*",
     "Clouds": [
       {
         "_findAll": "$[*]",
@@ -458,7 +458,7 @@ The exact same can be achieved using structed JSON as well:
   ```
 
   #### What this does
-  - Applies to every weather asset in `Weathers/Zone1/`.
+  - Applies to every weather asset in `Server/Weathers/Zone1/`.
   - Selects every cloud
   - Finds first color with Hour > 14
   - Adds new object before the found element
