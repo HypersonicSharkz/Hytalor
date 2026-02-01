@@ -15,10 +15,21 @@ import com.jayway.jsonpath.spi.json.GsonJsonProvider;
 import java.io.BufferedReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 
 public class JSONUtil {
+    public static final List<String> VALID_JSON_EXTENSIONS = List.of(
+            "json",
+            "bson",
+            "particlespawner",
+            "particlesystem",
+            "blockyanim",
+            "blockymodel"
+    );
+
     private static final GsonJsonProvider provider = new GsonJsonProvider();
     private static final Configuration conf = Configuration
             .builder()
@@ -36,14 +47,14 @@ public class JSONUtil {
         } catch (Exception e) {
             HytalorPlugin.get().getLogger()
                     .at(Level.WARNING)
-                    .log("      Failed to read JSON file at path: " + path, e);
+                    .log("     ⚠ Failed to read JSON file at path: " + path, e);
             return null;
         }
     }
 
     public static void deepMerge(JsonObject source, JsonObject target) {
         for (String key: source.keySet()) {
-            if (key.equals("BaseAssetPath") || key.equals("_priority"))
+            if (key.equals("BaseAssetPath") || key.equals("_BaseAssetPath") || key.equals("_priority"))
                 continue;
 
             JsonElement sourceValue = source.get(key);

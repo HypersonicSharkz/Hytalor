@@ -116,11 +116,9 @@ public class HytalorPlugin extends JavaPlugin {
 
     public void initializeOverrideDirectory() {
         try {
-            Path filePath = OVERRIDES_TEMP_PATH;
-
-            Path targetRoot = filePath.resolve("Server");
+            Path targetRoot = OVERRIDES_TEMP_PATH;
             Files.createDirectories(targetRoot);
-            Path sourceRoot = AssetModule.get().getBaseAssetPack().getRoot().resolve("Server");
+            Path sourceRoot = AssetModule.get().getBaseAssetPack().getRoot();
 
             Files.walkFileTree(sourceRoot, new SimpleFileVisitor<Path>() {
 

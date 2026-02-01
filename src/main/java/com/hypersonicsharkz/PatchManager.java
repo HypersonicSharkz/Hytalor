@@ -1,15 +1,10 @@
 package com.hypersonicsharkz;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.hypersonicsharkz.builders.PatchBuilder;
+import com.google.gson.*;
 import com.hypersonicsharkz.util.Color;
 import com.hypersonicsharkz.util.JSONUtil;
 import com.hypersonicsharkz.util.QueryUtil;
 import com.hypixel.hytale.assetstore.AssetPack;
-import com.hypixel.hytale.builtin.hytalegenerator.LoggerUtil;
 import com.hypixel.hytale.common.util.FormatUtil;
 import com.hypixel.hytale.logger.sentry.SkipSentryException;
 import com.hypixel.hytale.server.core.asset.AssetModule;
@@ -17,15 +12,10 @@ import com.hypixel.hytale.server.core.asset.monitor.AssetMonitor;
 import com.hypixel.hytale.server.core.asset.monitor.AssetMonitorHandler;
 import com.hypixel.hytale.server.core.asset.monitor.EventKind;
 import com.hypixel.hytale.server.core.util.io.FileUtil;
-import org.jline.jansi.Ansi;
-import org.jline.jansi.AnsiColors;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.logging.Level;
@@ -154,11 +144,20 @@ public class PatchManager {
     }
 
     public void loadPatch(Path path, boolean refresh) {
+        HytalorPlugin.get().getLogger().at(Level.INFO).log(
+                "Loading Patch: " + path
+        );
+
         JsonObject data = JSONUtil.readJSON(path);
         if (data == null)
             return;
 
-        JsonElement basePathPattern = data.get("BaseAssetPath");
+        if (data.has("BaseAssetPath")) {
+            loadPatch_Deprecated(path, refresh, data);
+            return;
+        }
+
+        JsonElement basePathPattern = data.get("_BaseAssetPath");
         if (basePathPattern == null)
             return;
 
@@ -170,6 +169,39 @@ public class PatchManager {
         } else {
             baseAssets.addAll(getBaseAssets(basePathPattern.getAsString()));
         }
+
+        if (baseAssets.isEmpty()) {
+            HytalorPlugin.get().getLogger().at(Level.INFO).log(
+                    "%s    ⚠ No base assets found for patch using base path pattern: " + basePathPattern.getAsString(),
+                    Color.RED
+            );
+            return;
+        }
+
+        if (cachedPatchtoBaseMap.containsKey(path)) {
+            unloadPatch(path, false);
+        }
+
+        for (Map.Entry<String, Path> basePath : baseAssets) {
+            addPatchAsset(basePath.getKey(), path);
+
+            if (refresh)
+                applyPatches(basePath.getKey());
+        }
+    }
+
+    private void loadPatch_Deprecated(Path path, boolean refresh, JsonObject data) {
+        HytalorPlugin.get().getLogger().at(Level.WARNING).log(
+                "   ⚠ \"BaseAssetPath\" is DEPRECATED, please visit GitHub for more information: https://github.com/HypersonicSharkz/Hytalor?tab=readme-ov-file#-patch-files"
+        );
+
+        JsonElement basePathPattern = data.get("BaseAssetPath");
+        if (basePathPattern == null)
+            return;
+
+        String pattern = "Server/" + basePathPattern.getAsString() + ".json";
+
+        List<Map.Entry<String, Path>> baseAssets = getBaseAssets(pattern);
 
         if (baseAssets.isEmpty()) {
             HytalorPlugin.get().getLogger().at(Level.INFO).log(
@@ -219,7 +251,12 @@ public class PatchManager {
     }
 
     private static boolean isJsonFile(@Nonnull Path path) {
-        return Files.isRegularFile(path) && path.toString().endsWith(".json");
+        if (!Files.isRegularFile(path))
+            return false;
+
+        String extension = QueryUtil.getExtension(path.getFileName().toString());
+
+        return JSONUtil.VALID_JSON_EXTENSIONS.contains(extension);
     }
 
     private static boolean isIgnoredFile(@Nonnull Path path) {
@@ -284,8 +321,15 @@ public class PatchManager {
 
         int applied = 0;
         for (PatchObject patchData : patchesJSON) {
+            FileSystem fs = patchData.path.getFileSystem();
+            String zipFilePath = Paths.get(fs.toString()).toString();
+
+            boolean zip = zipFilePath.endsWith(".jar") || zipFilePath.endsWith(".zip");
+
+            String fullPath = (zip ? (zipFilePath + "!") : "") + patchData.path;
+
             logger.at(Level.INFO).log(
-                    "%s   ✔ Applying patch: " + patchData.path,
+                    "%s   ✔ Applying patch: " + fullPath,
                     Color.GREEN
             );
 
@@ -304,7 +348,7 @@ public class PatchManager {
                 FormatUtil.nanosToString(duration)
         );
 
-        Path overridePath = HytalorPlugin.OVERRIDES_TEMP_PATH.resolve("Server/" + baseName + ".json");
+        Path overridePath = HytalorPlugin.OVERRIDES_TEMP_PATH.resolve(baseName);
 
         savePatchAsset(combined, overridePath);
     }
@@ -318,7 +362,7 @@ public class PatchManager {
     }
 
     private void cacheAssetPaths(AssetPack pack) {
-        Path path = pack.getRoot().resolve("Server");
+        Path path = pack.getRoot();
 
         try {
             if (Files.isDirectory(path)) {
@@ -326,7 +370,7 @@ public class PatchManager {
                     @Nonnull
                     public FileVisitResult visitFile(@Nonnull Path file, @Nonnull BasicFileAttributes attrs) {
                         if (PatchManager.isJsonFile(file) && !PatchManager.isIgnoredFile(file)) {
-                            String relativePath = path.relativize(file).toString().replace(".json", "");
+                            String relativePath = path.relativize(file).toString();
                             relativePath = relativePath.replace("\\", "/");
                             cachedBasePathMap.put(relativePath, file);
                         }

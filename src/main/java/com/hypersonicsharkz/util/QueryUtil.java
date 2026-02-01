@@ -28,4 +28,12 @@ public class QueryUtil {
         regex.append("$");
         return Pattern.compile(regex.toString());
     }
+
+    public static String getExtension(String str){
+        int begin = str.lastIndexOf(".");
+        if(begin == -1)
+            return null;
+        String extension = str.substring(begin + 1);
+        return extension;
+    }
 }
