@@ -92,6 +92,17 @@ It is also possible to specify an array of asset paths. And these paths can also
 }
 ```
 
+### Priority
+If your patch has to be applied before another patch of the same asset, you can use the `_priority` field.
+Higher priority means it will be applied first. Default value is 0.
+```json
+{
+  "_BaseAssetPath": "Server/Weathers/Zone1/Zone1_Sunny.json",
+  "_priority": 10,
+  "Stars": "Sky/Void.png",
+}
+```
+
 <br />
 
 ## 🔧 Array Patching
