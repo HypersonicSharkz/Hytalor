@@ -50,12 +50,12 @@ YourPlugin
 ```
 
 ### 🧩 Patch Files
-Each patch file targets one asset by specifying the entire path, or multiple assets by using wildcards.
+Each patch file targets one or more asset by specifying entire paths, using wildcards, or even RegEx.
 These Assets can also be from other mods. If a target asset is overwritten by another mod, this version will be used as the "base" asset for patching.
 
 ```json
 {
-  "BaseAssetPath": "Weathers/Zone1/Zone1_Sunny",
+  "_BaseAssetPath": "Server/Weathers/Zone1/Zone1_Sunny.json",
   "Stars": "Sky/Void.png",
 }
 ```
@@ -65,12 +65,32 @@ Only overrides the `Stars` texture in the Zone1_Sunny asset.
 
 ```json
 {
-  "BaseAssetPath": "Weathers/Zone1/*",
+  "_BaseAssetPath": "Server/Weathers/Zone1/*.json",
   "Stars": "Sky/Void.png",
 }
 ```
 
 Overrides the `Stars` texture of every asset insde the Weathers/Zone1 directory
+
+Regex can also be used instead of wildcards for more precise control.
+```json
+{
+  "_BaseAssetPath": "regex:Server/Weathers/Zone[12]/.*Sunny.json",
+  "Stars": "Sky/Void.png",
+}
+```
+This will override only Zone1_Sunny and Zone2_Sunny
+
+It is also possible to specify an array of asset paths. And these paths can also use regex or wildcards:
+```json
+{
+  "_BaseAssetPath": [
+    "Server/Weathers/Zone1/.*json"
+    "regex:Server/Weathers/Zone[23]/.*Sunny.json"
+  ],
+  "Stars": "Sky/Void.png",
+}
+```
 
 <br />
 
