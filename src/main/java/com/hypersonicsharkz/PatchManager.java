@@ -255,6 +255,9 @@ public class PatchManager {
             return false;
 
         String extension = QueryUtil.getExtension(path.getFileName().toString());
+        if (extension == null) {
+            return false;
+        }
 
         return JSONUtil.VALID_JSON_EXTENSIONS.contains(extension);
     }
