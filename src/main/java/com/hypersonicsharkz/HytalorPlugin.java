@@ -176,28 +176,24 @@ public class HytalorPlugin extends JavaPlugin {
     }
 
     public void registerAssetPack() {
-        Path filePath = OVERRIDES_TEMP_PATH;
+        try {
+            PluginManifest manifest = new PluginManifest();
+            manifest.setGroup("com.hypersonicsharkz");
+            manifest.setName("Hytalor-Overrides");
+            manifest.setVersion(Semver.fromString("1.0.0"));
+            manifest.setDescription("Temp folder for Hytalor asset overrides");
 
-        PluginManifest manifest = new PluginManifest(
-                "com.hypersonicsharkz",
-                "Hytalor-Overrides",
-                Semver.fromString("1.0.0"),
-                "Temp folder for Hytalor asset overrides",
-                new ArrayList<>(),
-                "",
-                null,
-                null,
-                new HashMap<>(),
-                new HashMap<>(),
-                new HashMap<>(),
-                new ArrayList<>(),
-                false
-        );
-
-        AssetModule.get().registerPack(
-                "com.hypersonicsharkz:Hytalor-Overrides",
-                filePath,
-                manifest
-        );
+            AssetModule.get().registerPack(
+                    "com.hypersonicsharkz:Hytalor-Overrides",
+                    OVERRIDES_TEMP_PATH,
+                    manifest,
+                    false
+            );
+        } catch (Throwable e) {
+            getLogger().at(Level.WARNING).log(
+                    "Could not register override pack programmatically: %s",
+                    e.getMessage()
+            );
+        }
     }
 }
