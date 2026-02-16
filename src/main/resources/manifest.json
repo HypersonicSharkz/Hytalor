@@ -11,6 +11,7 @@
     ],
     "Website": "https://github.com/HypersonicSharkz/Hytalor",
     "Main": "com.hypersonicsharkz.HytalorPlugin",
+    "ServerVersion": ">=2026.2.11",
     "Dependencies": {
         
     },
