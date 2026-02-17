@@ -66,27 +66,20 @@ public class HytalorPlugin extends JavaPlugin {
         this.getCommandRegistry().registerCommand(new HytalorCommandCollection());
 
         this.getEventRegistry().register((short)128, LoadAssetEvent.class, (event) -> {
-            this.getLogger().at(Level.INFO).log("Loading Hytalor Patch assets phase...");
-            long start = System.nanoTime();
             List<AssetPack> assetPacks = AssetModule.get().getAssetPacks();
 
             for (AssetPack assetPack : assetPacks) {
-                PatchManager.get().loadPatchAssets(assetPack);
+                if (!assetPack.getName().equals("com.hypersonicsharkz:Hytalor-Overrides")) {
+                    PatchManager.get().cacheAssetPaths(assetPack);
+                }
             }
-
-            this.getLogger()
-                    .at(Level.INFO)
-                    .log(
-                            "Loading Hytalor Patch assets phase completed! Boot time %s, Took %s",
-                            FormatUtil.nanosToString(System.nanoTime() - event.getBootStart()),
-                            FormatUtil.nanosToString(System.nanoTime() - start)
-                    );
         });
 
         getEventRegistry().register(AssetPackRegisterEvent.class, event -> {
             if (event.getAssetPack().getName().equals("com.hypersonicsharkz:Hytalor-Overrides")) {
                 return;
             }
+            PatchManager.get().cacheAssetPaths(event.getAssetPack());
             PatchManager.get().loadPatchAssets(event.getAssetPack());
         });
 
@@ -108,6 +101,22 @@ public class HytalorPlugin extends JavaPlugin {
     public void initializePatches() {
         clearOverrideDirectory(false);
         initializeOverrideDirectory();
+
+        this.getLogger().at(Level.INFO).log("Loading Hytalor Patch assets phase...");
+        long start = System.nanoTime();
+
+        List<AssetPack> assetPacks = AssetModule.get().getAssetPacks();
+
+        for (AssetPack assetPack : assetPacks) {
+            PatchManager.get().loadPatchAssets(assetPack);
+        }
+
+        this.getLogger()
+                .at(Level.INFO)
+                .log(
+                        "Loading Hytalor Patch assets phase completed! Took %s",
+                        FormatUtil.nanosToString(System.nanoTime() - start)
+                );
 
         PatchManager.get().applyAllPatches();
 

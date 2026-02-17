@@ -84,10 +84,6 @@ public class PatchManager {
                 "Loading patch assets for pack: " + pack.getName()
         );
 
-        if (!pack.getName().equals("com.hypersonicsharkz:Hytalor-Overrides")) {
-            cacheAssetPaths(pack);
-        }
-
         try {
             AssetMonitor assetMonitor = AssetModule.get().getAssetMonitor();
             if (assetMonitor != null && !pack.isImmutable() && Files.isDirectory(path)) {
@@ -357,7 +353,7 @@ public class PatchManager {
         HytalorPlugin.get().getLogger().at(Level.INFO).log("══════════════════════════════════════════════════════════════════════════");
     }
 
-    private void cacheAssetPaths(AssetPack pack) {
+    public void cacheAssetPaths(AssetPack pack) {
         Path path = pack.getRoot();
 
         try {
