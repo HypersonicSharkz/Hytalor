@@ -61,7 +61,13 @@ public class PatchManager {
         cachedPatchtoBaseMap.computeIfAbsent(patchPath, k -> new ArrayList<>()).add(basePath);
     }
 
-    private List<Map.Entry<String, Path>> getBaseAssets(String input) {
+    /**
+     * Gets all base assets matching the given input pattern.
+     * @param input The input pattern, either starting with "regex:" for regex patterns,
+     *              or a glob pattern otherwise.
+     * @return List of Map.Entry containing base asset path strings and their corresponding Path objects.
+     */
+    public List<Map.Entry<String, Path>> getBaseAssets(String input) {
         Pattern pattern;
 
         if (input.startsWith("regex:")) {
@@ -353,6 +359,37 @@ public class PatchManager {
         HytalorPlugin.get().getLogger().at(Level.INFO).log("══════════════════════════════════════════════════════════════════════════");
     }
 
+    /**
+     * Gets all loaded patches of a base asset, in order of _priority.
+     * @param basePath The base asset path to get patches for, fx. {@code "Server/Weathers/Zone1/Cave_Deep.json"}
+     * @return List of PatchObject, containing Path and parsed JsonObject of the patches.
+     */
+    public List<PatchObject> getPatches(String basePath) {
+        List<Path> patches = this.patchesMap.get(basePath);
+        if (patches == null) {
+            HytalorPlugin.get().getLogger().at(Level.WARNING).log("No Patches found for Base Asset: " + basePath);
+            return new ArrayList<>();
+        }
+
+        List<PatchObject> patchesJSON = new ArrayList<>();
+
+        for(Path patch : patches) {
+            JsonObject patchData = JSONUtil.readJSON(patch);
+            if (patchData == null) {
+                HytalorPlugin.get().getLogger().at(Level.INFO).log("%s   ⚠ Failed to read patch: " + patch, "\u001b[31m");
+            } else {
+                patchesJSON.add(new PatchObject(patchData, patch));
+            }
+        }
+
+        patchesJSON.sort((a, b) -> {
+            int weightA = a.patch.has("_priority") ? a.patch.get("_priority").getAsInt() : 0;
+            int weightB = b.patch.has("_priority") ? b.patch.get("_priority").getAsInt() : 0;
+            return Integer.compare(weightB, weightA);
+        });
+        return patchesJSON;
+    }
+
     public void cacheAssetPaths(AssetPack pack) {
         Path path = pack.getRoot();
 
@@ -409,5 +446,5 @@ public class PatchManager {
         }
     }
 
-    private record PatchObject(JsonObject patch, Path path) {}
+    public record PatchObject(JsonObject patch, Path path) {}
 }
