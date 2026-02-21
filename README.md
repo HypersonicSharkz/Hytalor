@@ -255,7 +255,7 @@ Upsert merges into the element queried for in `_find` if it exists. Otherwise ad
     "_op": "upsert",
     "_find": {
       "Id": "Arcane_Spellbooks"
-    }
+    },
     "Id": "Arcane_Spellbooks",
     "Icon": "Custom.Icon",
     "Name": "Custom.Name"
@@ -457,7 +457,7 @@ The exact same can be achieved using structed JSON as well:
         "_findAll": "$[*]",
         "Colors": [
           {
-            "_find": "$[?(@.Hour > 14)]"
+            "_find": "$[?(@.Hour > 14)]",
             "_op": "add",
             "Hour": 14,
             "Color": "#00FF00"
